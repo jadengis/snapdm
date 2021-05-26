@@ -1,9 +1,79 @@
 {
-  
-  
   "version": 2,
-  
-  "projects": {},
+  "projects": {
+    "model": {
+      "root": "packages/model",
+      "sourceRoot": "packages/model/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/packages/model",
+            "main": "packages/model/src/index.ts",
+            "packageJson": "packages/model/package.json",
+            "tsConfig": "packages/model/tsconfig.lib.json",
+            "assets": [
+              "LICENSE",
+              "packages/model/package.json",
+              "packages/model/*.md"
+            ]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["packages/model/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/packages/model"],
+          "options": {
+            "jestConfig": "packages/model/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "preconditions": {
+      "root": "packages/preconditions",
+      "sourceRoot": "packages/preconditions/src",
+      "projectType": "library",
+      "targets": {
+        "build": {
+          "executor": "@nrwl/node:package",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/packages/preconditions",
+            "main": "packages/preconditions/src/index.ts",
+            "packageJson": "packages/preconditions/package.json",
+            "tsConfig": "packages/preconditions/tsconfig.lib.json",
+            "assets": [
+              "LICENSE",
+              "packages/preconditions/package.json",
+              "packages/preconditions/*.md"
+            ]
+          }
+        },
+        "lint": {
+          "executor": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["packages/preconditions/**/*.ts"]
+          }
+        },
+        "test": {
+          "executor": "@nrwl/jest:jest",
+          "outputs": ["coverage/packages/preconditions"],
+          "options": {
+            "jestConfig": "packages/preconditions/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    }
+  },
   "cli": {
     "defaultCollection": "@nrwl/workspace"
   }

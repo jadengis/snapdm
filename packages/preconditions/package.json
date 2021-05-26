@@ -1,0 +1,26 @@
+{
+  "name": "@snapdm/preconditions",
+  "version": "0.1.0",
+  "description": "General purpose preconditions for typesafe Typescript libraries",
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jadengis/snapdm/issues"
+  },
+  "homepage": "https://github.com/jadengis/snapdm#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jadengis/snapdm"
+  },
+  "keywords": [
+    "snapdm",
+    "preconditions"
+  ],
+  "author": {
+    "name": "John Dengis",
+    "email": "jadengis@gmail.com"
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@snapdm/model",
+  "version": "0.1.0",
+  "description": "An opinionated snapshot oriented modeling system for Cloud Firestore",
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jadengis/snapdm/issues"
+  },
+  "homepage": "https://github.com/jadengis/snapdm#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jadengis/snapdm"
+  },
+  "keywords": [
+    "snapdm",
+    "model",
+    "firestore",
+    "snapshot"
+  ],
+  "author": {
+    "name": "John Dengis",
+    "email": "jadengis@gmail.com"
+  },
+  "sideEffects": false
+}

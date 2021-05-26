@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@snapdm/model": ["packages/model/src/index.ts"],
+      "@snapdm/preconditions": ["packages/preconditions/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
