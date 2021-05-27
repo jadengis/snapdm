@@ -24,7 +24,20 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nrwl/nx/typescript"],
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/ban-types": [
+          "error",
+          {
+            "types": {
+              "{}": false,
+              "Function": false,
+              "object": false,
+              "Object": false
+            }
+          }
+        ],
+        "@typescript-eslint/no-empty-interface": "off"
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

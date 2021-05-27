@@ -1,35 +1,18 @@
 import { Timestamp } from './timestamp';
 import type { DeepPartial } from 'ts-essentials';
 
-type SnapshotData = Record<string, unknown>;
-
-export type SnapshotDefinition = Readonly<{
-  type: string;
-  data: SnapshotData;
-}>;
+export type SnapshotData = object;
 
 /**
  * A document snapshot model.
  */
-export type Snapshot<
-  T extends SnapshotDefinition = SnapshotDefinition
-> = Readonly<{
-  type: T['type'];
+export type Snapshot<T extends SnapshotData = SnapshotData> = Readonly<{
+  type: string;
   id: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }> &
-  T['data'];
-
-type Timestamps = 'createdAt' | 'updatedAt';
-
-export type PreSnapshot<T extends Snapshot> = Omit<
-  T,
-  'type' | 'id' | Timestamps
-> & {
-  type?: string; // should be T["type"] but seems like TS3.9 broke this
-  id?: string; // should be T["id"] but seems like TS3.9 broke this
-};
+  T;
 
 export function isSnapshot<T extends Snapshot>(value: unknown): value is T {
   const v = value as Partial<Snapshot>;

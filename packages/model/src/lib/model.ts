@@ -1,30 +1,29 @@
 import {
   Snapshot,
-  PreSnapshot,
+  SnapshotData,
   SnapshotUpdates,
   isSnapshot,
-  SnapshotDefinition,
 } from './snapshot';
 import { isUndefined, assertIsDefined } from '@snapdm/preconditions';
 import * as ids from './ids';
-import { Timestamp } from './timestamp';
 import { fieldValue } from './field-value';
 import { merge } from './utils/merge';
 import { DeepPartial } from 'ts-essentials';
+import { delegate } from './utils/delegate';
 
-export type Type<T> = new (...args: unknown[]) => T;
+type Type<T> = new (...args: unknown[]) => T;
 
-export type AbstractModelClass = Readonly<{
+type AbstractModelClass = Readonly<{
   collection: string;
   type?: string;
   prefix?: string;
 }>;
 
-export type ModelClass<T extends AnyModel> = Type<T> & AbstractModelClass;
+type ModelClass<T extends AnyModel> = Type<T> & AbstractModelClass;
 
 type InitFunction<T extends AnyModel> = (
   init: unknown
-) => PreSnapshot<T['snapshot']>;
+) => ModelInit<T['snapshot']>;
 
 type InitializableModel<T extends AnyModel> = Readonly<{
   initializer: InitFunction<T>;
@@ -33,80 +32,69 @@ type InitializableModel<T extends AnyModel> = Readonly<{
 type InitializableModelClass<T extends AnyModel> = ModelClass<T> &
   InitializableModel<T>;
 
-export type AnyModel = SnapdmModel<any, unknown>;
+type AnyModel = Model<any, unknown>;
 
-export abstract class SnapdmModel<
-  Definition extends SnapshotDefinition,
-  Initializer
-> {
-  constructor(initializer: Initializer | Snapshot<Definition>) {
-    if (isSnapshot<Snapshot<Definition>>(initializer)) {
-      this._isNew = false;
-      this._value = initializer;
+export type ModelInit<T extends Snapshot> = Omit<
+  T,
+  'type' | 'id' | 'createdAt' | 'updatedAt'
+> & {
+  type?: string; // should be T["type"] but seems like TS3.9 broke this
+  id?: string; // should be T["id"] but seems like TS3.9 broke this
+};
+
+export type ModelRef<T extends AnyModel> = Readonly<{
+  type: T['type'];
+  id: T['id'];
+}>;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export interface Model<Data, Initializer> extends Snapshot {}
+
+export abstract class Model<Data extends SnapshotData, Initializer> {
+  constructor(initializer: Initializer | Snapshot<Data>) {
+    if (isSnapshot<Snapshot<Data>>(initializer)) {
+      this.__isNew = false;
+      this.__value = initializer;
     } else {
-      const { type, prefix } = this._type;
-      this._isNew = true;
-      this._value = _newSnapshot(
-        this._type.initializer(initializer),
+      const { type, prefix } = this.__type;
+      this.__isNew = true;
+      this.__value = newSnapshot(
+        this.__type.initializer(initializer),
         type,
         prefix
       );
     }
+    return delegate(this, '__value');
   }
 
-  private readonly _value: Snapshot<Definition>;
+  private readonly __value: Snapshot<Data>;
 
   /**
    * A flag indicating if this model is new i.e. it was created from
    * and initializer and not a snapshot.
    */
-  private _isNew: boolean;
+  private __isNew: boolean;
 
   /**
    * An object containing the differences between this object and
    * the object it was copied from. An entity should only be saved if it
    * isNew or its updates are defined.
    */
-  private _updates?: SnapshotUpdates<Definition['data']>;
-
-  get type(): Definition['type'] {
-    return this.snapshot.type;
-  }
-
-  get id(): string {
-    return this.snapshot.id;
-  }
-
-  get createdAt(): Timestamp {
-    return this.snapshot.createdAt;
-  }
-
-  get updatedAt(): Timestamp {
-    return this.snapshot.updatedAt;
-  }
+  private __updates?: SnapshotUpdates<Data>;
 
   /**
    * Get the current snapshot of the underlying JSON document.
    */
-  get snapshot(): Snapshot<Definition> {
-    return this._value;
+  get snapshot(): Snapshot<Data> {
+    return this.__value;
   }
 
-  get updates(): SnapshotUpdates<Definition['data']> | undefined {
-    return this._updates;
+  get updates(): SnapshotUpdates<Data> | undefined {
+    return this.__updates;
   }
 
   get isNew(): boolean {
-    return this._isNew;
-  }
-
-  /**
-   * Returns a new snapshot with the given patch applied.
-   * @param updates A deep partial of the model data.
-   * @returns A copy of this snapshot with the given patch applied.
-   */
-  update(updates: DeepPartial<Definition['data']>): this {
-    return this.copy(updates);
+    return this.__isNew;
   }
 
   /**
@@ -120,20 +108,20 @@ export abstract class SnapdmModel<
     };
   }
 
-  protected copy(updates?: DeepPartial<Definition['data']>): this {
+  protected __copy(updates?: DeepPartial<Data>): this {
     // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
-      return new this._type({ ...this.snapshot });
+      return new this.__type({ ...this.snapshot });
     }
     // In the presence of updates, update the the updatedAt timestamp,
     // and set the correct `updates` on the new entity.
-    const computedUpdates = merge(this._updates, updates, {
+    const computedUpdates = merge(this.__updates, updates, {
       updatedAt: fieldValue().serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this._type(newValue);
-    newEntity._updates = computedUpdates;
-    newEntity._isNew = this.isNew;
+    const newEntity = new this.__type(newValue);
+    newEntity.__updates = computedUpdates;
+    newEntity.__isNew = this.isNew;
     return newEntity;
   }
 
@@ -142,18 +130,13 @@ export abstract class SnapdmModel<
    * methods defined on subclasses, or construct instances of subclasses in
    * the base class.
    */
-  private get _type(): InitializableModelClass<this> {
+  private get __type(): InitializableModelClass<this> {
     return this.constructor as InitializableModelClass<this>;
   }
 }
 
-export type ModelRef<T extends AnyModel> = Readonly<{
-  type: T['type'];
-  id: T['id'];
-}>;
-
-function _newSnapshot<T extends Snapshot>(
-  resource: PreSnapshot<T>,
+function newSnapshot<T extends Snapshot>(
+  resource: ModelInit<T>,
   modelType: string | undefined,
   prefix?: string
 ): T {
