@@ -31,7 +31,7 @@
           "executor": "@nrwl/jest:jest",
           "outputs": ["coverage/packages/model"],
           "options": {
-            "jestConfig": "packages/model/jest.config.js",
+            "jestConfig": "packages/model/jest.config.cjs",
             "passWithNoTests": true
           }
         }
@@ -67,7 +67,7 @@
           "executor": "@nrwl/jest:jest",
           "outputs": ["coverage/packages/preconditions"],
           "options": {
-            "jestConfig": "packages/preconditions/jest.config.js",
+            "jestConfig": "packages/preconditions/jest.config.cjs",
             "passWithNoTests": true
           }
         }
