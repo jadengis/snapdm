@@ -51,7 +51,7 @@ export interface Model<Data, Initializer> extends Snapshot {}
 
 export abstract class Model<
   Data extends SnapshotData = any,
-  Initializer = unknown
+  Initializer = any
 > {
   constructor(initializer: Initializer | Snapshot<Data>) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
