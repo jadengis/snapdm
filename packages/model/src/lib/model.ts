@@ -19,22 +19,18 @@ type ModelClassAttributes = Readonly<{
   prefix?: string;
 }>;
 
-type InitFunction<T extends AnyModel> = (
+type InitFunction<T extends Model> = (
   init: unknown
 ) => ModelInit<T['snapshot']>;
 
-type ParentSelector<T extends AnyModel> = (
-  child: ModelInit<T>
-) => ModelRef<AnyModel>;
+type ParentSelector<T extends Model> = (child: ModelInit<T>) => ModelRef<Model>;
 
-export type ModelClass<T extends AnyModel> = Type<T> &
+export type ModelClass<T extends Model> = Type<T> &
   ModelClassAttributes &
   Readonly<{
     initializer: InitFunction<T>;
     parent?: ParentSelector<T>;
   }>;
-
-export type AnyModel = Model<any, unknown>;
 
 export type ModelInit<T extends Snapshot> = Omit<
   T,
@@ -44,7 +40,7 @@ export type ModelInit<T extends Snapshot> = Omit<
   id?: string; // should be T["id"] but seems like TS3.9 broke this
 };
 
-export type ModelRef<T extends AnyModel> = Readonly<{
+export type ModelRef<T extends Model> = Readonly<{
   type: T['type'];
   id: T['id'];
   ref: DocumentReference<T['snapshot']>;
@@ -53,7 +49,10 @@ export type ModelRef<T extends AnyModel> = Readonly<{
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface Model<Data, Initializer> extends Snapshot {}
 
-export abstract class Model<Data extends SnapshotData, Initializer> {
+export abstract class Model<
+  Data extends SnapshotData = any,
+  Initializer = unknown
+> {
   constructor(initializer: Initializer | Snapshot<Data>) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
       this.__isNew = false;
@@ -134,7 +133,7 @@ export abstract class Model<Data extends SnapshotData, Initializer> {
   }
 }
 
-function newSnapshot<T extends AnyModel>(
+function newSnapshot<T extends Model>(
   type: ModelClass<T>,
   init: unknown
 ): T['snapshot'] {

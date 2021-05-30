@@ -1,3 +1,13 @@
+# 0.3.1
+
+### Features
+
+- Expose `Model` with default type arguments for easier type constraints
+
+### Internal
+
+- Removes `AnyModel`
+
 # 0.3.0
 
 ### Features
