@@ -1,2 +1,3 @@
-export * from './lib/model';
-export * from './lib/initialize';
+export { initialize } from './lib/initialize';
+export { Model, ModelInit, ModelRef } from './lib/model';
+export { ModelFactory, buildModel } from './lib/model-factory';

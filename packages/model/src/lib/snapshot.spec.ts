@@ -1,4 +1,5 @@
 import { isSnapshot } from './snapshot';
+import { adapter } from './adapter';
 
 describe('Snapshot', () => {
   describe('isSnapshot', () => {
@@ -12,6 +13,7 @@ describe('Snapshot', () => {
         {
           type: 'foo',
           id: 'foo-adfadfg',
+          ref: adapter().references('foos', 'foo-adfgadfg'),
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -21,6 +23,7 @@ describe('Snapshot', () => {
         {
           type: 'foo',
           id: 'foo-adfadfg',
+          ref: adapter().references('foos', 'foo-adfgadfg'),
           createdAt: new Date(),
           updatedAt: new Date(),
           value: 'adfgadfga',

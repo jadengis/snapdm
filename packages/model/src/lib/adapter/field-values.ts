@@ -1,5 +1,3 @@
-import { assertIsDefined } from '@snapdm/preconditions';
-
 export interface FieldValue {
   isEqual(other: FieldValue): boolean;
 }
@@ -59,15 +57,4 @@ export interface FieldValueFactory {
    * @return The FieldValue sentinel for use in a call to `set()` or `update()`.
    */
   increment(n: number): FieldValue;
-}
-
-let _factory: FieldValueFactory | undefined;
-
-export function fieldValue(): FieldValueFactory {
-  assertIsDefined(_factory);
-  return _factory;
-}
-
-export function setFieldValue(newFactory: FieldValueFactory): void {
-  _factory = newFactory;
 }

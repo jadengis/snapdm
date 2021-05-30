@@ -5,38 +5,40 @@ import {
   isSnapshot,
 } from './snapshot';
 import { isUndefined, assertIsDefined } from '@snapdm/preconditions';
-import * as ids from './ids';
-import { fieldValue } from './field-value';
+import { adapter } from './adapter';
 import { merge } from './utils/merge';
 import { DeepPartial } from 'ts-essentials';
 import { delegate } from './utils/delegate';
+import { DocumentReference } from './adapter/references';
 
 type Type<T> = new (...args: unknown[]) => T;
 
-type AbstractModelClass = Readonly<{
+type ModelClassAttributes = Readonly<{
   collection: string;
   type?: string;
   prefix?: string;
 }>;
 
-type ModelClass<T extends AnyModel> = Type<T> & AbstractModelClass;
-
 type InitFunction<T extends AnyModel> = (
   init: unknown
 ) => ModelInit<T['snapshot']>;
 
-type InitializableModel<T extends AnyModel> = Readonly<{
-  initializer: InitFunction<T>;
-}>;
+type ParentSelector<T extends AnyModel> = (
+  child: ModelInit<T>
+) => ModelRef<AnyModel>;
 
-type InitializableModelClass<T extends AnyModel> = ModelClass<T> &
-  InitializableModel<T>;
+export type ModelClass<T extends AnyModel> = Type<T> &
+  ModelClassAttributes &
+  Readonly<{
+    initializer: InitFunction<T>;
+    parent?: ParentSelector<T>;
+  }>;
 
-type AnyModel = Model<any, unknown>;
+export type AnyModel = Model<any, unknown>;
 
 export type ModelInit<T extends Snapshot> = Omit<
   T,
-  'type' | 'id' | 'createdAt' | 'updatedAt'
+  'type' | 'id' | 'ref' | 'createdAt' | 'updatedAt'
 > & {
   type?: string; // should be T["type"] but seems like TS3.9 broke this
   id?: string; // should be T["id"] but seems like TS3.9 broke this
@@ -45,6 +47,7 @@ export type ModelInit<T extends Snapshot> = Omit<
 export type ModelRef<T extends AnyModel> = Readonly<{
   type: T['type'];
   id: T['id'];
+  ref: DocumentReference<T['snapshot']>;
 }>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -56,13 +59,8 @@ export abstract class Model<Data extends SnapshotData, Initializer> {
       this.__isNew = false;
       this.__value = initializer;
     } else {
-      const { type, prefix } = this.__type;
       this.__isNew = true;
-      this.__value = newSnapshot(
-        this.__type.initializer(initializer),
-        type,
-        prefix
-      );
+      this.__value = newSnapshot(this.__type, initializer);
     }
     return delegate(this, '__value');
   }
@@ -105,6 +103,7 @@ export abstract class Model<Data extends SnapshotData, Initializer> {
     return {
       type: this.type,
       id: this.id,
+      ref: this.ref,
     };
   }
 
@@ -116,7 +115,7 @@ export abstract class Model<Data extends SnapshotData, Initializer> {
     // In the presence of updates, update the the updatedAt timestamp,
     // and set the correct `updates` on the new entity.
     const computedUpdates = merge(this.__updates, updates, {
-      updatedAt: fieldValue().serverTimestamp(),
+      updatedAt: adapter().fieldValues.serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
     const newEntity = new this.__type(newValue);
@@ -130,27 +129,32 @@ export abstract class Model<Data extends SnapshotData, Initializer> {
    * methods defined on subclasses, or construct instances of subclasses in
    * the base class.
    */
-  private get __type(): InitializableModelClass<this> {
-    return this.constructor as InitializableModelClass<this>;
+  private get __type(): ModelClass<this> {
+    return this.constructor as ModelClass<this>;
   }
 }
 
-function newSnapshot<T extends Snapshot>(
-  resource: ModelInit<T>,
-  modelType: string | undefined,
-  prefix?: string
-): T {
+function newSnapshot<T extends AnyModel>(
+  type: ModelClass<T>,
+  init: unknown
+): T['snapshot'] {
+  const resource = type.initializer(init);
   if (isUndefined(resource.type)) {
-    assertIsDefined(modelType, 'must have modelType defined');
-    resource.type = modelType;
+    assertIsDefined(type.type, 'must have modelType defined');
+    resource.type = type.type;
   }
   if (isUndefined(resource.id)) {
-    assertIsDefined(prefix);
-    resource.id = `${prefix ? `${prefix}-` : ''}${ids.generateId()}`;
+    assertIsDefined(type.prefix);
+    resource.id = `${type.prefix}-${adapter().ids()}`;
   }
-  const now = fieldValue().serverTimestamp();
+  const now = adapter().fieldValues.serverTimestamp();
   return ({
     ...resource,
+    ref: adapter().references(
+      type.collection,
+      resource.id,
+      type.parent ? type.parent(resource).ref : undefined
+    ),
     createdAt: now,
     updatedAt: now,
   } as unknown) as T;

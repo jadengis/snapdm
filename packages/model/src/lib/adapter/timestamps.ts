@@ -1,5 +1,3 @@
-import { assertIsDefined } from '@snapdm/preconditions';
-
 export interface Timestamp {
   /**
    * The number of seconds of UTC time since Unix epoch 1970-01-01T00:00:00Z.
@@ -41,15 +39,4 @@ export interface TimestampFactory {
    * given number of milliseconds.
    */
   fromMillis(milliseconds: number): Timestamp;
-}
-
-let _factory: TimestampFactory | undefined;
-
-export function timestamp(): TimestampFactory {
-  assertIsDefined(_factory);
-  return _factory;
-}
-
-export function setTimestamp(newFactory: TimestampFactory): void {
-  _factory = newFactory;
 }

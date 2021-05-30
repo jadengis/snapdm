@@ -52,6 +52,10 @@ describe('Model', () => {
       expect(subject().toRef()).toMatchObject({
         type: 'Foo',
         id: expect.stringMatching(/foo-.*/),
+        ref: expect.objectContaining({
+          id: expect.stringMatching(/foo-.*/),
+          path: expect.stringMatching(/foos\/foo-.*/),
+        }),
       });
     });
   });
