@@ -1,3 +1,13 @@
+# 0.4.1
+
+### Features
+
+- Expose `ModelClass`
+
+### Fixes
+
+- Make the default type of `Model` easier to work with
+
 # 0.4.0
 
 ### Fixes
