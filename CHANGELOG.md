@@ -1,3 +1,9 @@
+# 0.4.3
+
+### Fixes
+
+- fix implementation of `InitFunction`
+
 # 0.4.2
 
 ### Fixes

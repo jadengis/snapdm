@@ -19,9 +19,7 @@ type ModelClassAttributes = Readonly<{
   prefix?: string;
 }>;
 
-type InitFunction<T extends Model> = (
-  init: unknown
-) => ModelInit<T['snapshot']>;
+type InitFunction<T extends Model> = (init: any) => ModelInit<T['snapshot']>;
 
 type ParentSelector<T extends Model> = (child: ModelInit<T>) => ModelRef<Model>;
 
