@@ -1,3 +1,9 @@
+# 0.4.2
+
+### Fixes
+
+- fix implementation of `Type`
+
 # 0.4.1
 
 ### Features

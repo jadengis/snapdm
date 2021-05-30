@@ -11,7 +11,7 @@ import { DeepPartial } from 'ts-essentials';
 import { delegate } from './utils/delegate';
 import { DocumentReference } from './adapter/references';
 
-type Type<T> = new (...args: unknown[]) => T;
+type Type<T> = new (...args: any[]) => T;
 
 type ModelClassAttributes = Readonly<{
   collection: string;
