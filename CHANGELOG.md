@@ -1,3 +1,9 @@
+# 0.4.0
+
+### Fixes
+
+- BREAKING: Correctly mark in `package.json` that libraries are distributed as ES modules
+
 # 0.3.1
 
 ### Features
