@@ -1,6 +1,6 @@
 {
   "name": "@snapdm/model",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "An opinionated snapshot oriented modeling system for Cloud Firestore",
   "publishConfig": {
     "access": "public"
@@ -24,6 +24,5 @@
     "name": "John Dengis",
     "email": "jadengis@gmail.com"
   },
-  "sideEffects": false,
-  "type": "module"
+  "sideEffects": false
 }

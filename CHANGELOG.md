@@ -1,3 +1,9 @@
+# 0.4.4
+
+### Fixes
+
+- rollback `type: module` change as it really messes up everything
+
 # 0.4.3
 
 ### Fixes

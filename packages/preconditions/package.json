@@ -1,6 +1,6 @@
 {
   "name": "@snapdm/preconditions",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "General purpose preconditions for typesafe Typescript libraries",
   "publishConfig": {
     "access": "public"
@@ -22,6 +22,5 @@
     "name": "John Dengis",
     "email": "jadengis@gmail.com"
   },
-  "sideEffects": false,
-  "type": "module"
+  "sideEffects": false
 }
