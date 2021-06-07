@@ -1,4 +1,4 @@
-import { Model, ModelInit } from './model';
+import { Model } from './model';
 import { buildModel } from './model-factory';
 
 type FooData = Readonly<{
@@ -12,14 +12,14 @@ type FooInitializer = Readonly<{
 
 interface Foo extends FooData {}
 
-class Foo extends Model<FooData, FooInitializer> {
-  static readonly type = 'Foo';
-  static readonly collection = 'foos';
-  static readonly prefix = 'foo';
-  static initializer(init: FooInitializer): ModelInit<Foo['snapshot']> {
+class Foo extends Model<FooData, FooInitializer>({
+  type: 'Foo',
+  collection: 'foos',
+  prefix: 'foo',
+  initialize: (init) => {
     return { ...init, valueSize: init.value.length };
-  }
-}
+  },
+}) {}
 
 describe('ModelFactory', () => {
   describe('buildModel', () => {

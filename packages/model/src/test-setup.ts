@@ -4,7 +4,9 @@ import { Timestamp, TimestampFactory } from './lib/adapter/timestamps';
 import { FieldValueFactory, FieldValue } from './lib/adapter/field-values';
 
 function* idGenerator(): Generator<string> {
-  yield Math.random().toString();
+  while (true) {
+    yield Math.floor(Math.random() * 1000000).toString();
+  }
 }
 
 // Configure the base model id generator with this simple id generator.
