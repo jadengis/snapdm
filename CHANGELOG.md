@@ -1,3 +1,9 @@
+# 0.5.2
+
+### Fixes
+
+- Mixins strip accessibility modifiers away, so use a shim `AnyModel` interface to circumvent stupid ES private property declarations.
+
 # 0.5.1
 
 ### Fixes

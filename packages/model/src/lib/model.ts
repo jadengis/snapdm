@@ -15,6 +15,7 @@ import { merge } from './utils/merge';
 import { DeepPartial } from 'ts-essentials';
 import { delegate } from './utils/delegate';
 import { DocumentReference } from './adapter/references';
+import { Timestamp } from './adapter/timestamps';
 
 type Type<T> = new (...args: any[]) => T;
 
@@ -81,47 +82,53 @@ export type ModelRef<T extends AnyModel> = Readonly<{
   ref: DocumentReference<T['snapshot']>;
 }>;
 
+export type AnyModel<Data extends SnapshotData = any> = Readonly<{
+  type: string;
+  id: string;
+  ref: DocumentReference<Snapshot<Data>>;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  snapshot: Snapshot<Data>;
+}>;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export interface AnyModel<Data, Initializer> extends Snapshot {}
+interface ModelImpl<Data, Initializer> extends Snapshot {}
 
 /**
  * AnyModel is the base class that provides the core functionality
  * required by any snapdm model.
  */
-export abstract class AnyModel<
-  Data extends SnapshotData = any,
-  Initializer = any
-> {
+abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
+  implements AnyModel<Data> {
   constructor(initializer: Initializer | Snapshot<Data>) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
-      this.__isNew = false;
-      this.__value = initializer;
+      this.#isNew = false;
+      this.#value = initializer;
     } else {
-      this.__isNew = true;
-      this.__value = newSnapshot(this.__type, initializer);
+      this.#isNew = true;
+      this.#value = newSnapshot(this.#type, initializer);
     }
     return delegate(this, 'snapshot');
   }
 
-  private readonly __value: Snapshot<Data>;
+  readonly #value: Snapshot<Data>;
 
-  private __isNew: boolean;
+  #isNew: boolean;
 
-  private __updates?: SnapshotUpdates<Data>;
+  #updates?: SnapshotUpdates<Data>;
 
   /**
    * Meta method for getting the constructor of `this` object to access static
    * methods defined on subclasses, or construct instances of subclasses in
    * the base class.
    */
-  private readonly __type: ModelClass<this> = this
-    .constructor as ModelClass<this>;
+  readonly #type: ModelClass<this> = this.constructor as ModelClass<this>;
 
   /**
    * Get the current snapshot of the underlying JSON document.
    */
   get snapshot(): Snapshot<Data> {
-    return this.__value;
+    return this.#value;
   }
 
   /**
@@ -131,7 +138,7 @@ export abstract class AnyModel<
    * perform a partial update of the underlying document.
    */
   get updates(): SnapshotUpdates<Data> | undefined {
-    return this.__updates;
+    return this.#updates;
   }
 
   /**
@@ -139,7 +146,7 @@ export abstract class AnyModel<
    * and initializer and not a snapshot.
    */
   get isNew(): boolean {
-    return this.__isNew;
+    return this.#isNew;
   }
 
   /**
@@ -154,20 +161,20 @@ export abstract class AnyModel<
     };
   }
 
-  protected __copy(updates?: DeepPartial<Data>): this {
+  __copy(updates?: DeepPartial<Data>): this {
     // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
-      return new this.__type({ ...this.snapshot });
+      return new this.#type({ ...this.snapshot });
     }
     // In the presence of updates, update the the updatedAt timestamp,
     // and set the correct `updates` on the new entity.
-    const computedUpdates = merge(this.__updates, updates, {
+    const computedUpdates = merge(this.#updates, updates, {
       updatedAt: adapter().fieldValues.serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this.__type(newValue);
-    newEntity.__updates = computedUpdates;
-    newEntity.__isNew = this.isNew;
+    const newEntity = new this.#type(newValue);
+    newEntity.#updates = computedUpdates;
+    newEntity.#isNew = this.isNew;
     return newEntity;
   }
 }
@@ -225,17 +232,14 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
  * @param options The options for configuring this model
  * @returns A model class with the provided options mixed int the class.
  */
-export default function <Data extends SnapshotData, Initializer>({
+export function Model<Data extends SnapshotData, Initializer>({
   collection,
   initialize,
   parent,
   prefix,
   type,
 }: ModelOptions<Data, Initializer>) {
-  // This mixin is exported as default to work around a stupid typing issue where
-  // mixin functions can't have private / protected props.
-  // https://github.com/microsoft/TypeScript/issues/30355
-  return class Model extends AnyModel<Data, Initializer> {
+  return class Model extends ModelImpl<Data, Initializer> {
     static readonly type = type;
     static readonly collection = collection;
     static readonly prefix = prefix;
