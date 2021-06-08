@@ -89,6 +89,9 @@ export type AnyModel<Data extends SnapshotData = any> = Readonly<{
   createdAt: Timestamp;
   updatedAt: Timestamp;
   snapshot: Snapshot<Data>;
+  updates?: SnapshotUpdates<Data>;
+  isNew: boolean;
+  toRef(): ModelRef<AnyModel<Data>>;
 }>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

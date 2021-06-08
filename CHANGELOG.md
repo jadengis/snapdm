@@ -1,3 +1,9 @@
+# 0.5.3
+
+### Fixes
+
+- Make the `AnyModel` shim interface mor complete.
+
 # 0.5.2
 
 ### Fixes
