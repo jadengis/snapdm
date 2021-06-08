@@ -16,14 +16,14 @@ import { DeepPartial } from 'ts-essentials';
 import { delegate } from './utils/delegate';
 import { DocumentReference } from './adapter/references';
 
+type Type<T> = new (...args: any[]) => T;
+
 type ModelImmutableAttributes =
   | 'type'
   | 'id'
   | 'ref'
   | 'createdAt'
   | 'updatedAt';
-
-type Type<T> = new (...args: any[]) => T;
 
 type ModelClassAttributes = Readonly<{
   collection: string;
@@ -45,10 +45,22 @@ export type ModelOptions<
   Initializer
 > = ModelClassAttributes &
   Readonly<{
+    /**
+     * An initializing function that converts a model's initializer into
+     * its internal data. This method is where data defaults should be
+     * set.
+     */
     initialize: InitializeFunction<Data, Initializer>;
+
+    /**
+     * Metadata about this model's parent.
+     */
     parent?: ModelParent<Data>;
   }>;
 
+/**
+ * A type that accurately represents the interface of typeof AnyModel.
+ */
 export type ModelClass<T extends AnyModel> = Type<T> &
   ModelOptions<T['snapshot'], any>;
 
@@ -60,80 +72,74 @@ type ModelInit<Data extends SnapshotData> = Omit<
   id?: string; // should be T["id"] but seems like TS3.9 broke this
 };
 
+/**
+ * A reference to another model.
+ */
 export type ModelRef<T extends AnyModel> = Readonly<{
   type: T['type'];
   id: T['id'];
   ref: DocumentReference<T['snapshot']>;
 }>;
 
-export type AnyModel = __Model;
-
-export function Model<Data extends SnapshotData, Initializer>({
-  collection,
-  initialize,
-  parent,
-  prefix,
-  type,
-}: ModelOptions<Data, Initializer>) {
-  return class Model extends __Model<Data, Initializer> {
-    static readonly type = type;
-    static readonly collection = collection;
-    static readonly prefix = prefix;
-    static readonly parent = parent;
-    static readonly initialize = initialize;
-  };
-}
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface __Model<Data, Initializer> extends Snapshot {}
+export interface AnyModel<Data, Initializer> extends Snapshot {}
 
-abstract class __Model<Data extends SnapshotData = any, Initializer = any> {
+/**
+ * AnyModel is the base class that provides the core functionality
+ * required by any snapdm model.
+ */
+export abstract class AnyModel<
+  Data extends SnapshotData = any,
+  Initializer = any
+> {
   constructor(initializer: Initializer | Snapshot<Data>) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
-      this.#isNew = false;
-      this.#value = initializer;
+      this.__isNew = false;
+      this.__value = initializer;
     } else {
-      this.#isNew = true;
-      this.#value = newSnapshot(this.#type, initializer);
+      this.__isNew = true;
+      this.__value = newSnapshot(this.__type, initializer);
     }
     return delegate(this, 'snapshot');
   }
 
-  readonly #value: Snapshot<Data>;
+  private readonly __value: Snapshot<Data>;
 
-  /**
-   * A flag indicating if this model is new i.e. it was created from
-   * and initializer and not a snapshot.
-   */
-  #isNew: boolean;
+  private __isNew: boolean;
 
-  /**
-   * An object containing the differences between this object and
-   * the object it was copied from. An entity should only be saved if it
-   * isNew or its updates are defined.
-   */
-  #updates?: SnapshotUpdates<Data>;
+  private __updates?: SnapshotUpdates<Data>;
 
   /**
    * Meta method for getting the constructor of `this` object to access static
    * methods defined on subclasses, or construct instances of subclasses in
    * the base class.
    */
-  #type: ModelClass<this> = this.constructor as ModelClass<this>;
+  private readonly __type: ModelClass<this> = this
+    .constructor as ModelClass<this>;
 
   /**
    * Get the current snapshot of the underlying JSON document.
    */
   get snapshot(): Snapshot<Data> {
-    return this.#value;
+    return this.__value;
   }
 
+  /**
+   * An object containing the differences between this object and
+   * the object it was copied from. An entity should only be saved if it
+   * isNew or its updates are defined. This object can also be used
+   * perform a partial update of the underlying document.
+   */
   get updates(): SnapshotUpdates<Data> | undefined {
-    return this.#updates;
+    return this.__updates;
   }
 
+  /**
+   * A flag indicating if this model is new i.e. it was created from
+   * and initializer and not a snapshot.
+   */
   get isNew(): boolean {
-    return this.#isNew;
+    return this.__isNew;
   }
 
   /**
@@ -148,20 +154,20 @@ abstract class __Model<Data extends SnapshotData = any, Initializer = any> {
     };
   }
 
-  __copy(updates?: DeepPartial<Data>): this {
+  protected __copy(updates?: DeepPartial<Data>): this {
     // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
-      return new this.#type({ ...this.snapshot });
+      return new this.__type({ ...this.snapshot });
     }
     // In the presence of updates, update the the updatedAt timestamp,
     // and set the correct `updates` on the new entity.
-    const computedUpdates = merge(this.#updates, updates, {
+    const computedUpdates = merge(this.__updates, updates, {
       updatedAt: adapter().fieldValues.serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this.#type(newValue);
-    newEntity.#updates = computedUpdates;
-    newEntity.#isNew = this.isNew;
+    const newEntity = new this.__type(newValue);
+    newEntity.__updates = computedUpdates;
+    newEntity.__isNew = this.isNew;
     return newEntity;
   }
 }
@@ -212,4 +218,28 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
   return (
     typeof v.type === 'string' && typeof v.id === 'string' && isDefined(v.ref)
   );
+}
+
+/**
+ * Mixin function for creating a new model.
+ * @param options The options for configuring this model
+ * @returns A model class with the provided options mixed int the class.
+ */
+export default function <Data extends SnapshotData, Initializer>({
+  collection,
+  initialize,
+  parent,
+  prefix,
+  type,
+}: ModelOptions<Data, Initializer>) {
+  // This mixin is exported as default to work around a stupid typing issue where
+  // mixin functions can't have private / protected props.
+  // https://github.com/microsoft/TypeScript/issues/30355
+  return class Model extends AnyModel<Data, Initializer> {
+    static readonly type = type;
+    static readonly collection = collection;
+    static readonly prefix = prefix;
+    static readonly parent = parent;
+    static readonly initialize = initialize;
+  };
 }

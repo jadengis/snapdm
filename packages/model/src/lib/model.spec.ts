@@ -1,4 +1,4 @@
-import { Model, ModelRef } from './model';
+import Model, { ModelRef } from './model';
 import { Snapshot } from './snapshot';
 
 type FooData = Readonly<{

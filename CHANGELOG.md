@@ -1,3 +1,9 @@
+# 0.5.1
+
+### Fixes
+
+- Fixes an issue where ES private property emit made it impossible for Models to be used in contraints requiring `AnyModel`.
+
 # 0.5.0
 
 ### Features
