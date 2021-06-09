@@ -94,6 +94,11 @@ export type AnyModel<Data extends SnapshotData = any> = Readonly<{
   toRef(): ModelRef<AnyModel<Data>>;
 }>;
 
+type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
+  updates?: SnapshotUpdates<Data>;
+  isNew?: boolean;
+}>;
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface ModelImpl<Data, Initializer> extends Snapshot {}
 
@@ -103,9 +108,15 @@ interface ModelImpl<Data, Initializer> extends Snapshot {}
  */
 abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
   implements AnyModel<Data> {
-  constructor(initializer: Initializer | Snapshot<Data>) {
+  constructor(initializer: Initializer);
+  constructor(snapshot: Snapshot<Data>, options?: ModelCtrOptions<Data>);
+  constructor(
+    initializer: Initializer | Snapshot<Data>,
+    options?: ModelCtrOptions<Data>
+  ) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
-      this.#isNew = false;
+      this.#isNew = options?.isNew ?? false;
+      this.#updates = options?.updates;
       this.#value = initializer;
     } else {
       this.#isNew = true;
@@ -175,9 +186,10 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
       updatedAt: adapter().fieldValues.serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this.#type(newValue);
-    newEntity.#updates = computedUpdates;
-    newEntity.#isNew = this.isNew;
+    const newEntity = new this.#type(newValue, {
+      updates: computedUpdates,
+      isNew: this.isNew,
+    });
     return newEntity;
   }
 }

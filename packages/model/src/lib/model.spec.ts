@@ -19,7 +19,11 @@ class Foo extends Model<FooData, FooInitializer>({
   initialize: (init) => {
     return { ...init, valueSize: init.value.length };
   },
-}) {}
+}) {
+  updateValue(value: string): Foo {
+    return this.__copy({ value, valueSize: value.length });
+  }
+}
 
 type BarData = Readonly<{
   data: number;
@@ -95,11 +99,25 @@ describe('Model', () => {
         }),
       });
     });
+
+    fdescribe('.__copy', () => {
+      it('should merge the input into the underlying snapshot and update updates', () => {
+        const input = 'Bazlonia';
+        const result = subject().updateValue(input);
+        expect(result.value).toEqual(input);
+        expect(result.valueSize).toEqual(input.length);
+        expect(result.updates).toMatchObject({
+          updatedAt: expect.anything(),
+          value: input,
+          valueSize: input.length,
+        });
+      });
+    });
   });
 
   describe('model with parent', () => {
     const foo = new Foo({ value: 'Bars' });
-    let init: BarInitializer | Snapshot<BarData>;
+    let init: BarInitializer;
     const subject = () => new Bar(init);
 
     beforeEach(() => {

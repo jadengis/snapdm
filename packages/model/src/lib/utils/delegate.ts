@@ -5,17 +5,26 @@ export function delegate<T extends object>(
   return new Proxy(target, {
     get: (t, p) => {
       const prop = coerceToString(p);
-      if (p in t) return t[prop];
-      const value = target[delegateProperty][prop];
+      if (p in t) {
+        const value = t[prop];
+        if (typeof value === 'function') {
+          return new Proxy(value, {
+            apply: (f, _, args) => {
+              return f.apply(t, args);
+            },
+          });
+        }
+        return t[prop];
+      }
+      const value = t[delegateProperty][prop];
       if (typeof value === 'function') {
         // if it is a function, proxy it so that scope is correct
         return new Proxy(value, {
-          apply: (f, thisArg, argumentsList) => {
+          apply: (f, thisArg, args) => {
             // if trying to call on target, then use delegate
             // else call on provided thisArg
-            const scope =
-              thisArg === target ? target[delegateProperty] : thisArg;
-            return f.apply(scope, argumentsList);
+            const scope = thisArg === t ? t[delegateProperty] : thisArg;
+            return f.apply(scope, args);
           },
         });
       }
