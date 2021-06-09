@@ -15,7 +15,6 @@ interface Foo extends FooData {}
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
   collection: 'foos',
-  prefix: 'foo',
   initialize: (init) => {
     return { ...init, valueSize: init.value.length };
   },
@@ -40,7 +39,6 @@ interface Bar extends BarData {}
 class Bar extends Model<BarData, BarInitializer>({
   type: 'Bar',
   collection: 'bars',
-  prefix: 'bar',
   parent: {
     model: Foo,
     attribute: 'foo',
@@ -77,10 +75,6 @@ describe('Model', () => {
       expect(result.valueSize).toEqual(init.value.length);
     });
 
-    it('should prefix generated id', () => {
-      expect(subject().id).toMatch(/foo-.*/);
-    });
-
     it('should have the configured type', () => {
       expect(subject().type).toEqual(Foo.type);
     });
@@ -89,18 +83,24 @@ describe('Model', () => {
       expect(subject().isNew).toEqual(true);
     });
 
-    it('should build correct ref', () => {
-      expect(subject().toRef()).toMatchObject({
-        type: 'Foo',
-        id: expect.stringMatching(/foo-.*/),
-        ref: expect.objectContaining({
-          id: expect.stringMatching(/foo-.*/),
-          path: expect.stringMatching(/foos\/foo-.*/),
-        }),
+    it('should not have updates', () => {
+      expect(subject().updates).toBeUndefined();
+    });
+
+    describe('.toRef', () => {
+      it('should build correct ref', () => {
+        expect(subject().toRef()).toMatchObject({
+          type: 'Foo',
+          id: expect.any(String),
+          ref: expect.objectContaining({
+            id: expect.any(String),
+            path: expect.stringMatching(/foos\/.*/),
+          }),
+        });
       });
     });
 
-    fdescribe('.__copy', () => {
+    describe('.__copy', () => {
       it('should merge the input into the underlying snapshot and update updates', () => {
         const input = 'Bazlonia';
         const result = subject().updateValue(input);
@@ -129,7 +129,7 @@ describe('Model', () => {
     });
 
     it('should have a nested ref', () => {
-      expect(subject().ref.path).toMatch(/foos\/foo-.*\/bars\/bar-.*/);
+      expect(subject().ref.path).toMatch(/foos\/.*\/bars\/.*/);
     });
   });
 });

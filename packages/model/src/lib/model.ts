@@ -27,9 +27,8 @@ type ModelImmutableAttributes =
   | 'updatedAt';
 
 type ModelClassAttributes = Readonly<{
-  collection: string;
   type?: string;
-  prefix?: string;
+  collection: string;
 }>;
 
 type ModelParent<Data extends SnapshotData> = Readonly<{
@@ -127,9 +126,9 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
 
   readonly #value: Snapshot<Data>;
 
-  #isNew: boolean;
+  readonly #isNew: boolean;
 
-  #updates?: SnapshotUpdates<Data>;
+  readonly #updates?: SnapshotUpdates<Data>;
 
   /**
    * Meta method for getting the constructor of `this` object to access static
@@ -168,13 +167,22 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
    * @returns A ref to this model.
    */
   toRef(): ModelRef<this> {
-    return {
-      type: this.type,
-      id: this.id,
-      ref: this.ref,
-    };
+    // These values must be read directly from snapshot. ModelImpl implements
+    // Snapshot<Data> by Proxy and so it can't internally reference properties
+    // that it can provide externally. Big boy typescript tricks.
+    const { type, id, ref } = this.snapshot;
+    return { type, id, ref };
   }
 
+  /**
+   * Creates a new instance of this Model containing the provided
+   * updates to the internal snapshot. This method is not intended to be
+   * consumed externally to the class and exists primarily to be used as
+   * an implementation detail of more domain oriented transformations.
+   * @param updates A patch to apply to the current snapshot in creating
+   * the new one.
+   * @returns A new model with the given patch applied.
+   */
   __copy(updates?: DeepPartial<Data>): this {
     // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
@@ -204,8 +212,7 @@ function newSnapshot<T extends AnyModel>(
     resource.type = type.type;
   }
   if (isUndefined(resource.id)) {
-    assertIsDefined(type.prefix);
-    resource.id = `${type.prefix}-${adapter().ids()}`;
+    resource.id = adapter().ids();
   }
   const now = adapter().fieldValues.serverTimestamp();
   return ({
@@ -228,7 +235,7 @@ function resolveParentRef<T extends AnyModel>(
     const parentRef = init[type.parent.attribute];
     assert(
       isModelRef(parentRef),
-      `parent.attribute value '${type.parent.attribute} does not point to a ModelRef`
+      `parent.attribute value '${type.parent.attribute}' does not point to a ModelRef`
     );
     return parentRef.ref;
   }
@@ -251,13 +258,11 @@ export function Model<Data extends SnapshotData, Initializer>({
   collection,
   initialize,
   parent,
-  prefix,
   type,
 }: ModelOptions<Data, Initializer>) {
   return class Model extends ModelImpl<Data, Initializer> {
     static readonly type = type;
     static readonly collection = collection;
-    static readonly prefix = prefix;
     static readonly parent = parent;
     static readonly initialize = initialize;
   };

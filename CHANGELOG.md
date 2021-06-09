@@ -1,3 +1,13 @@
+# 0.5.4
+
+#### BREAKING CHANGES
+
+- Remove prefix because its stupid and unnecessary given that every document has a document reference attached to it that specifies the path and hence prepends the collection name.
+
+### Fixes
+
+- Goofy private variable access bug fixed by pushing optional updates and `isNew` when creating a snapshot.
+
 # 0.5.3
 
 ### Fixes

@@ -15,7 +15,6 @@ interface Foo extends FooData {}
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
   collection: 'foos',
-  prefix: 'foo',
   initialize: (init) => {
     return { ...init, valueSize: init.value.length };
   },
