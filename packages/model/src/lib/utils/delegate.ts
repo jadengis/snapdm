@@ -6,7 +6,7 @@ export function delegate<T extends object>(
     get: (t, p) => {
       const prop = coerceToString(p);
       if (p in t) {
-        return applyInScope(t[prop], () => t);
+        return t[prop];
       }
       return applyInScope(t[delegateProperty][prop], (thisArg) =>
         thisArg === t ? t[delegateProperty] : thisArg
@@ -27,8 +27,5 @@ function applyInScope(value: unknown, scope: (thisArg: any) => any) {
 }
 
 function coerceToString(p: string | symbol): string {
-  if (typeof p === 'string') {
-    return p;
-  }
-  return p.toString();
+  return typeof p === 'string' ? p : p.toString();
 }

@@ -102,7 +102,7 @@ type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
 interface ModelImpl<Data, Initializer> extends Snapshot {}
 
 /**
- * AnyModel is the base class that provides the core functionality
+ * ModelImpl is the base class that provides the core functionality
  * required by any snapdm model.
  */
 abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
@@ -114,35 +114,26 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
     options?: ModelCtrOptions<Data>
   ) {
     if (isSnapshot<Snapshot<Data>>(initializer)) {
-      this.#isNew = options?.isNew ?? false;
-      this.#updates = options?.updates;
-      this.#value = initializer;
+      this.isNew = options?.isNew ?? false;
+      this.updates = options?.updates;
+      this.snapshot = initializer;
     } else {
-      this.#isNew = true;
-      this.#value = newSnapshot(this.#type, initializer);
+      this.isNew = true;
+      this.snapshot = newSnapshot(this.model, initializer);
     }
     return delegate(this, 'snapshot');
   }
 
-  readonly #value: Snapshot<Data>;
-
-  readonly #isNew: boolean;
-
-  readonly #updates?: SnapshotUpdates<Data>;
-
-  /**
-   * Meta method for getting the constructor of `this` object to access static
-   * methods defined on subclasses, or construct instances of subclasses in
-   * the base class.
-   */
-  readonly #type: ModelClass<this> = this.constructor as ModelClass<this>;
-
   /**
    * Get the current snapshot of the underlying JSON document.
    */
-  get snapshot(): Snapshot<Data> {
-    return this.#value;
-  }
+  readonly snapshot: Snapshot<Data>;
+
+  /**
+   * A flag indicating if this model is new i.e. it was created from
+   * and initializer and not a snapshot.
+   */
+  readonly isNew: boolean;
 
   /**
    * An object containing the differences between this object and
@@ -150,26 +141,20 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
    * isNew or its updates are defined. This object can also be used
    * perform a partial update of the underlying document.
    */
-  get updates(): SnapshotUpdates<Data> | undefined {
-    return this.#updates;
-  }
+  readonly updates?: SnapshotUpdates<Data>;
 
   /**
-   * A flag indicating if this model is new i.e. it was created from
-   * and initializer and not a snapshot.
+   * Meta method for getting the constructor of `this` object to access static
+   * methods defined on subclasses, or construct instances of subclasses in
+   * the base class.
    */
-  get isNew(): boolean {
-    return this.#isNew;
-  }
+  readonly model: ModelClass<this> = this.constructor as ModelClass<this>;
 
   /**
    * Convert this model into a reference object.
    * @returns A ref to this model.
    */
   toRef(): ModelRef<this> {
-    // These values must be read directly from snapshot. ModelImpl implements
-    // Snapshot<Data> by Proxy and so it can't internally reference properties
-    // that it can provide externally. Big boy typescript tricks.
     const { type, id, ref } = this.snapshot;
     return { type, id, ref };
   }
@@ -186,15 +171,15 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
   __copy(updates?: DeepPartial<Data>): this {
     // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
-      return new this.#type({ ...this.snapshot });
+      return new this.model({ ...this.snapshot });
     }
     // In the presence of updates, update the the updatedAt timestamp,
     // and set the correct `updates` on the new entity.
-    const computedUpdates = merge(this.#updates, updates, {
+    const computedUpdates = merge(this.updates, updates, {
       updatedAt: adapter().fieldValues.serverTimestamp(),
     });
     const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this.#type(newValue, {
+    const newEntity = new this.model(newValue, {
       updates: computedUpdates,
       isNew: this.isNew,
     });

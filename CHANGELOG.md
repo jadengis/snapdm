@@ -1,3 +1,9 @@
+# 0.5.5
+
+### Fixes
+
+- Use public readonly fields on the model instead of getters and private fields, to remove unproxied access to model methods. This solves an issue where TS thinks that `this.value` exists in model methods when `this.snapshot.value` exists.
+
 # 0.5.4
 
 #### BREAKING CHANGES
