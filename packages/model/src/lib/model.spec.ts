@@ -48,6 +48,25 @@ class Bar extends Model<BarData, BarInitializer>({
   },
 }) {}
 
+type BazData = BarData &
+  Readonly<{
+    name: string;
+  }>;
+
+type BazInitializer = BarInitializer &
+  Readonly<{
+    name: string;
+  }>;
+
+interface Baz extends BazData {}
+
+class Baz extends Model<Bar, BazData, BazInitializer>(Bar, {
+  type: 'Baz',
+  initialize: ({ name }, base) => {
+    return { ...base, name };
+  },
+}) {}
+
 describe('Model', () => {
   describe('static methods', () => {
     const subject = () => Foo;
@@ -130,6 +149,43 @@ describe('Model', () => {
 
     it('should have a nested ref', () => {
       expect(subject().ref.path).toMatch(/foos\/.*\/bars\/.*/);
+    });
+  });
+
+  describe('model extension', () => {
+    const foo = new Foo({ value: 'Bars' });
+    let init: BazInitializer;
+    const subject = () => new Baz(init);
+
+    describe('model metadata', () => {
+      it('should inherit collection', () => {
+        expect(Baz.collection).toEqual(Bar.collection);
+      });
+
+      it('should overwrite type', () => {
+        expect(Baz.type).toEqual('Baz');
+      });
+
+      it('should inherit parent', () => {
+        expect(Baz.parent).toEqual(Bar.parent);
+      });
+    });
+
+    describe('model properties', () => {
+      beforeEach(() => {
+        init = {
+          data: 25,
+          name: 'big model',
+          foo,
+        };
+      });
+
+      it('should have all expected properties', () => {
+        const baz = subject();
+        expect(baz.name).toEqual(init.name);
+        expect(baz.data).toEqual(init.data);
+        expect(baz.foo.id).toEqual(foo.id);
+      });
     });
   });
 });

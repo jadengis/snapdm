@@ -40,23 +40,48 @@ export type InitializeFunction<Data extends SnapshotData, Initializer> = (
   init: Initializer
 ) => ModelInit<Data>;
 
+export type InitializeFunctionWithBase<
+  Base extends ModelImpl,
+  Data extends ModelData<Base>,
+  Initializer
+> = (init: Initializer, base: ModelInit<ModelData<Base>>) => ModelInit<Data>;
+
 export type ModelOptions<
   Data extends SnapshotData,
   Initializer
 > = ModelClassAttributes &
   Readonly<{
     /**
+     * Metadata about this model's parent.
+     */
+    parent?: ModelParent<Data>;
+
+    /**
      * An initializing function that converts a model's initializer into
      * its internal data. This method is where data defaults should be
      * set.
      */
-    initialize: InitializeFunction<Data, Initializer>;
-
-    /**
-     * Metadata about this model's parent.
-     */
-    parent?: ModelParent<Data>;
+    initialize?: InitializeFunction<Data, Initializer>;
   }>;
+
+type ModelData<T extends ModelImpl> = Omit<
+  T['snapshot'],
+  ModelImmutableAttributes
+>;
+
+export type ModelWithBaseOptions<
+  Base extends ModelImpl,
+  Data extends ModelData<Base>,
+  Initializer
+> = Readonly<{
+  type?: string;
+  /**
+   * An initializing function that converts a model's initializer into
+   * its internal data. This method is where data defaults should be
+   * set.
+   */
+  initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
+}>;
 
 /**
  * A type that accurately represents the interface of typeof AnyModel.
@@ -239,16 +264,45 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
  * @param options The options for configuring this model
  * @returns A model class with the provided options mixed int the class.
  */
-export function Model<Data extends SnapshotData, Initializer>({
-  collection,
-  initialize,
-  parent,
-  type,
-}: ModelOptions<Data, Initializer>) {
+export function Model<Data extends SnapshotData, Initializer>(
+  options: ModelOptions<Data, Initializer>
+): ModelClass<ModelImpl<Data, Initializer>>;
+export function Model<
+  Base extends ModelImpl,
+  Data extends ModelData<Base>,
+  Initializer
+>(
+  base: Type<Base>,
+  options: ModelWithBaseOptions<Base, Data, Initializer>
+): ModelClass<Base>;
+export function Model<
+  Base extends ModelImpl,
+  Data extends SnapshotData,
+  Initializer
+>(
+  baseOrOptions: any,
+  options?: ModelWithBaseOptions<Base, Data, Initializer>
+): any {
+  if (typeof baseOrOptions === 'function') {
+    assertIsDefined(options);
+    // Initialize with base expects a the model init of its base to that
+    // The new initialize data can simply be merged in.
+    return class Model extends baseOrOptions {
+      static readonly type = options.type;
+      static readonly initialize = (init) => {
+        return options.initialize(init, baseOrOptions.initialize(init));
+      };
+    };
+  }
+  const { type, collection, parent, initialize } = baseOrOptions;
   return class Model extends ModelImpl<Data, Initializer> {
     static readonly type = type;
     static readonly collection = collection;
     static readonly parent = parent;
-    static readonly initialize = initialize;
+    static readonly initialize = initialize ?? identity;
   };
+}
+
+function identity<T>(e: T): T {
+  return e;
 }

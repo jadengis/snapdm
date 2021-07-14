@@ -1,3 +1,9 @@
+# 0.6.0
+
+### Features
+
+- Adds support for extending existing models with a new signature for the model mixin function. The `Model(base, modelWithBaseOptions)` call signature ensures the extending model extends the given `base` model. Model extensions are constrained to live in the same collection as their base so model metadata props `collection` and `parent` are not overwriteable. `type` can be overwritten. Models with a base have a different signature for an initializer which include the ModelInit data of the base model. This allows the base model init data to be merged with the new data to form the final model init data for the new model.
+
 # 0.5.5
 
 ### Fixes
