@@ -41,7 +41,7 @@ export type InitializeFunction<Data extends SnapshotData, Initializer> = (
 ) => ModelInit<Data>;
 
 export type InitializeFunctionWithBase<
-  Base extends ModelImpl,
+  Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
 > = (init: Initializer, base: ModelInit<ModelData<Base>>) => ModelInit<Data>;
@@ -64,13 +64,13 @@ export type ModelOptions<
     initialize?: InitializeFunction<Data, Initializer>;
   }>;
 
-type ModelData<T extends ModelImpl> = Omit<
+type ModelData<T extends AnyModel> = Omit<
   T['snapshot'],
   ModelImmutableAttributes
 >;
 
 export type ModelWithBaseOptions<
-  Base extends ModelImpl,
+  Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
 > = Readonly<{
@@ -106,17 +106,18 @@ export type ModelRef<T extends AnyModel> = Readonly<{
   ref: DocumentReference<T['snapshot']>;
 }>;
 
-export type AnyModel<Data extends SnapshotData = any> = Readonly<{
-  type: string;
-  id: string;
-  ref: DocumentReference<Snapshot<Data>>;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  snapshot: Snapshot<Data>;
-  updates?: SnapshotUpdates<Data>;
-  isNew: boolean;
+export interface AnyModel<Data extends SnapshotData = any> {
+  readonly type: string;
+  readonly id: string;
+  readonly ref: DocumentReference<Snapshot<Data>>;
+  readonly createdAt: Timestamp;
+  readonly updatedAt: Timestamp;
+  readonly snapshot: Snapshot<Data>;
+  readonly updates?: SnapshotUpdates<Data>;
+  readonly isNew: boolean;
   toRef(): ModelRef<AnyModel<Data>>;
-}>;
+  __copy(updates?: DeepPartial<Data>): this;
+}
 
 type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
   updates?: SnapshotUpdates<Data>;
@@ -266,9 +267,9 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
  */
 export function Model<Data extends SnapshotData, Initializer>(
   options: ModelOptions<Data, Initializer>
-): ModelClass<ModelImpl<Data, Initializer>>;
+): ModelClass<AnyModel<Data>>;
 export function Model<
-  Base extends ModelImpl,
+  Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
 >(
@@ -276,7 +277,7 @@ export function Model<
   options: ModelWithBaseOptions<Base, Data, Initializer>
 ): ModelClass<Base>;
 export function Model<
-  Base extends ModelImpl,
+  Base extends AnyModel,
   Data extends SnapshotData,
   Initializer
 >(

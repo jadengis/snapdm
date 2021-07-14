@@ -1,3 +1,7 @@
+# 0.6.1
+
+- I guess don't expose private members :grimace:
+
 # 0.6.0
 
 ### Features
