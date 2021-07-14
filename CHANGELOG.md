@@ -1,4 +1,12 @@
+# 0.6.2
+
+### Fixes
+
+-Introduce `AbstractType` and `AnyType` to support abstract base models.
+
 # 0.6.1
+
+### Fixes
 
 - I guess don't expose private members :grimace:
 

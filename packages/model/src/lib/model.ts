@@ -19,6 +19,10 @@ import { Timestamp } from './adapter/timestamps';
 
 type Type<T> = new (...args: any[]) => T;
 
+type AbstractType<T> = abstract new (...args: any[]) => T;
+
+type AnyType<T> = Type<T> | AbstractType<T>
+
 type ModelImmutableAttributes =
   | 'type'
   | 'id'
@@ -273,7 +277,7 @@ export function Model<
   Data extends ModelData<Base>,
   Initializer
 >(
-  base: Type<Base>,
+  base: AnyType<Base>,
   options: ModelWithBaseOptions<Base, Data, Initializer>
 ): ModelClass<Base>;
 export function Model<
