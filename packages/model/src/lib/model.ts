@@ -101,6 +101,10 @@ type ModelInit<Data extends SnapshotData> = Omit<
   id?: string; // should be T["id"] but seems like TS3.9 broke this
 };
 
+type ModelConstructor<Data extends SnapshotData, Initializer, T extends AnyModel<Data>> = new (init: Initializer | Snapshot<Data>) => T;
+
+type ConstructableModel<Data extends SnapshotData, Initializer, T extends AnyModel<Data>> = ModelConstructor<Data, Initializer, T> &  ModelOptions<Data, Initializer>;
+
 /**
  * A reference to another model.
  */
@@ -271,7 +275,7 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
  */
 export function Model<Data extends SnapshotData, Initializer>(
   options: ModelOptions<Data, Initializer>
-): ModelClass<AnyModel<Data>>;
+): ConstructableModel<Data, Initializer, ModelImpl<Data, Initializer>>;
 export function Model<
   Base extends AnyModel,
   Data extends ModelData<Base>,
@@ -279,7 +283,7 @@ export function Model<
 >(
   base: AnyType<Base>,
   options: ModelWithBaseOptions<Base, Data, Initializer>
-): ModelClass<Base>;
+): ConstructableModel<Data, Initializer, Base>;
 export function Model<
   Base extends AnyModel,
   Data extends SnapshotData,

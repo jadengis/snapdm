@@ -1,8 +1,14 @@
+# 0.6.3
+
+### Fixes
+
+- Fix constructor signatures for models.
+
 # 0.6.2
 
 ### Fixes
 
--Introduce `AbstractType` and `AnyType` to support abstract base models.
+- Introduce `AbstractType` and `AnyType` to support abstract base models.
 
 # 0.6.1
 
