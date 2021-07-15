@@ -275,7 +275,7 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
  */
 export function Model<Data extends SnapshotData, Initializer>(
   options: ModelOptions<Data, Initializer>
-): ConstructableModel<Data, Initializer, ModelImpl<Data, Initializer>>;
+): ConstructableModel<Data, Initializer, AnyModel<Data>>;
 export function Model<
   Base extends AnyModel,
   Data extends ModelData<Base>,

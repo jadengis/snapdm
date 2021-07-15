@@ -1,3 +1,9 @@
+# 0.6.4
+
+### Fixes
+
+- I guess don't expose private members :grimace:
+
 # 0.6.3
 
 ### Fixes
