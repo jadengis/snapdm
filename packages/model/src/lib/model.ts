@@ -44,11 +44,13 @@ export type InitializeFunction<Data extends SnapshotData, Initializer> = (
   init: Initializer
 ) => ModelInit<Data>;
 
+export type LazyInitializeFunction<Data extends SnapshotData> = () => ModelInit<Data>;
+
 export type InitializeFunctionWithBase<
   Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
-> = (init: Initializer, base: ModelInit<ModelData<Base>>) => ModelInit<Data>;
+> = (init: Initializer, baseInit: LazyInitializeFunction<ModelData<Base>>) => ModelInit<Data>;
 
 export type ModelOptions<
   Data extends SnapshotData,
@@ -299,7 +301,7 @@ export function Model<
     return class Model extends baseOrOptions {
       static readonly type = options.type;
       static readonly initialize = (init) => {
-        return options.initialize(init, baseOrOptions.initialize(init));
+        return options.initialize(init, () => baseOrOptions.initialize(init));
       };
     };
   }

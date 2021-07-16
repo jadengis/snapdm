@@ -1,3 +1,9 @@
+# 0.7.0
+
+### BREAKING CHANGES
+
+- The second argument of an `InitializeFunctionWithBase` is a lazy function so that sub models that don't need the base's initialization logic don't need to pay the cost for it.
+
 # 0.6.4
 
 ### Fixes

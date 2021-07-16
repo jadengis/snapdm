@@ -63,7 +63,7 @@ interface Baz extends BazData {}
 class Baz extends Model<Bar, BazData, BazInitializer>(Bar, {
   type: 'Baz',
   initialize: ({ name }, base) => {
-    return { ...base, name };
+    return { ...base(), name };
   },
 }) {}
 
