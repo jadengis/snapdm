@@ -92,7 +92,7 @@ export type ModelWithBaseOptions<
 /**
  * A type that accurately represents the interface of typeof AnyModel.
  */
-export type ModelClass<T extends AnyModel> = Type<T> &
+export type ModelClass<T extends AnyModel> = AnyType<T> &
   ModelOptions<T['snapshot'], any>;
 
 type ModelInit<Data extends SnapshotData> = Omit<

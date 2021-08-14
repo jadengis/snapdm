@@ -1,3 +1,7 @@
+# 0.7.1
+
+- `ModelClass` supports abstract types.
+
 # 0.7.0
 
 ### BREAKING CHANGES
