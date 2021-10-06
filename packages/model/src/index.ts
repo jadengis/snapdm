@@ -1,5 +1,6 @@
 export { initialize, SnapdmOptions } from './lib/initialize';
-export { Adapter } from './lib/adapter';
+export { Adapter, adapter } from './lib/adapter';
+export { Timestamp } from './lib/adapter/timestamps';
 export {
   AnyModel,
   Model,
