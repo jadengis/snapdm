@@ -1,3 +1,3 @@
-module.exports = {
-  projects: ['<rootDir>/packages/model', '<rootDir>/packages/preconditions'],
-};
+const { getJestProjects } = require('@nrwl/jest');
+
+module.exports = { projects: getJestProjects() };
