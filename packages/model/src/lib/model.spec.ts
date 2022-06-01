@@ -10,7 +10,7 @@ type FooInitializer = Readonly<{
   value: string;
 }>;
 
-interface Foo extends FooData {}
+interface Foo extends FooData { }
 
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
@@ -34,7 +34,7 @@ type BarInitializer = Readonly<{
   foo: Foo;
 }>;
 
-interface Bar extends BarData {}
+interface Bar extends BarData { }
 
 class Bar extends Model<BarData, BarInitializer>({
   type: 'Bar',
@@ -46,7 +46,7 @@ class Bar extends Model<BarData, BarInitializer>({
   initialize: ({ data, foo }) => {
     return { data, foo: foo.toRef() };
   },
-}) {}
+}) { }
 
 type BazData = BarData &
   Readonly<{
@@ -58,14 +58,17 @@ type BazInitializer = BarInitializer &
     name: string;
   }>;
 
-interface Baz extends BazData {}
+interface Baz extends BazData { }
 
-class Baz extends Model<Bar, BazData, BazInitializer>(Bar, {
-  type: 'Baz',
-  initialize: ({ name }, base) => {
-    return { ...base(), name };
+class Baz extends Model<Bar, BazData, BazInitializer>({
+  extends: Bar,
+  options: {
+    type: 'Baz',
+    initialize: ({ name }, base) => {
+      return { ...base(), name };
+    },
   },
-}) {}
+}) { }
 
 describe('Model', () => {
   describe('static methods', () => {
