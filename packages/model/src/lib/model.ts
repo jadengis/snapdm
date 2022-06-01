@@ -21,7 +21,7 @@ type Type<T> = new (...args: any[]) => T;
 
 type AbstractType<T> = abstract new (...args: any[]) => T;
 
-type AnyType<T> = Type<T> | AbstractType<T>
+type AnyType<T> = Type<T> | AbstractType<T>;
 
 type ModelImmutableAttributes =
   | 'type'
@@ -44,18 +44,22 @@ export type InitializeFunction<Data extends SnapshotData, Initializer> = (
   init: Initializer
 ) => ModelInit<Data>;
 
-export type LazyInitializeFunction<Data extends SnapshotData> = () => ModelInit<Data>;
+export type LazyInitializeFunction<Data extends SnapshotData> =
+  () => ModelInit<Data>;
 
 export type InitializeFunctionWithBase<
   Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
-> = (init: Initializer, baseInit: LazyInitializeFunction<ModelData<Base>>) => ModelInit<Data>;
+  > = (
+    init: Initializer,
+    baseInit: LazyInitializeFunction<ModelData<Base>>
+  ) => ModelInit<Data>;
 
 export type ModelOptions<
   Data extends SnapshotData,
   Initializer
-> = ModelClassAttributes &
+  > = ModelClassAttributes &
   Readonly<{
     /**
      * Metadata about this model's parent.
@@ -75,19 +79,37 @@ type ModelData<T extends AnyModel> = Omit<
   ModelImmutableAttributes
 >;
 
-export type ModelWithBaseOptions<
+type ModelWithBaseOptions<
   Base extends AnyModel,
   Data extends ModelData<Base>,
   Initializer
-> = Readonly<{
-  type?: string;
-  /**
-   * An initializing function that converts a model's initializer into
-   * its internal data. This method is where data defaults should be
-   * set.
-   */
-  initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
-}>;
+  > = Readonly<{
+    type?: string;
+    /**
+     * An initializing function that converts a model's initializer into
+     * its internal data. This method is where data defaults should be
+     * set.
+     */
+    initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
+  }>;
+
+export type ExtendedModelOptions<
+  Base extends AnyModel,
+  Data extends ModelData<Base>,
+  Initializer
+  > = Readonly<{
+    extends: AnyType<Base>;
+    options: ModelWithBaseOptions<Base, Data, Initializer>;
+  }>;
+
+function isExtendModelOptions<
+  Base extends AnyModel,
+  Data extends ModelData<Base>,
+  Initializer
+>(value: unknown): value is ExtendedModelOptions<Base, Data, Initializer> {
+  const v = value as Partial<ExtendedModelOptions<Base, Data, Initializer>>;
+  return typeof v.extends === "function" && typeof v.options === "object"
+}
 
 /**
  * A type that accurately represents the interface of typeof AnyModel.
@@ -103,9 +125,17 @@ type ModelInit<Data extends SnapshotData> = Omit<
   id?: string; // should be T["id"] but seems like TS3.9 broke this
 };
 
-type ModelConstructor<Data extends SnapshotData, Initializer, T extends AnyModel<Data>> = new (init: Initializer | Snapshot<Data>) => T;
+type ModelConstructor<
+  Data extends SnapshotData,
+  Initializer,
+  T extends AnyModel<Data>
+  > = new (init: Initializer | Snapshot<Data>) => T;
 
-type ConstructableModel<Data extends SnapshotData, Initializer, T extends AnyModel<Data>> = ModelConstructor<Data, Initializer, T> &  ModelOptions<Data, Initializer>;
+type ConstructableModel<
+  Data extends SnapshotData,
+  Initializer,
+  T extends AnyModel<Data>
+  > = ModelConstructor<Data, Initializer, T> & ModelOptions<Data, Initializer>;
 
 /**
  * A reference to another model.
@@ -135,14 +165,15 @@ type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
 }>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface ModelImpl<Data, Initializer> extends Snapshot {}
+interface ModelImpl<Data, Initializer> extends Snapshot { }
 
 /**
  * ModelImpl is the base class that provides the core functionality
  * required by any snapdm model.
  */
 abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
-  implements AnyModel<Data> {
+  implements AnyModel<Data>
+{
   constructor(initializer: Initializer);
   constructor(snapshot: Snapshot<Data>, options?: ModelCtrOptions<Data>);
   constructor(
@@ -236,7 +267,7 @@ function newSnapshot<T extends AnyModel>(
     resource.id = adapter().ids();
   }
   const now = adapter().fieldValues.serverTimestamp();
-  return ({
+  return {
     ...resource,
     ref: adapter().references(
       type.collection,
@@ -245,7 +276,7 @@ function newSnapshot<T extends AnyModel>(
     ),
     createdAt: now,
     updatedAt: now,
-  } as unknown) as T;
+  } as unknown as T;
 }
 
 function resolveParentRef<T extends AnyModel>(
@@ -256,7 +287,9 @@ function resolveParentRef<T extends AnyModel>(
     const parentRef = init[type.parent.attribute];
     assert(
       isModelRef(parentRef),
-      `parent.attribute value '${type.parent.attribute}' does not point to a ModelRef`
+      `parent.attribute value '${String(
+        type.parent.attribute
+      )}' does not point to a ModelRef`
     );
     return parentRef.ref;
   }
@@ -283,29 +316,27 @@ export function Model<
   Data extends ModelData<Base>,
   Initializer
 >(
-  base: AnyType<Base>,
-  options: ModelWithBaseOptions<Base, Data, Initializer>
+  options: ExtendedModelOptions<Base, Data, Initializer>
 ): ConstructableModel<Data, Initializer, Base>;
 export function Model<
   Base extends AnyModel,
   Data extends SnapshotData,
   Initializer
 >(
-  baseOrOptions: any,
-  options?: ModelWithBaseOptions<Base, Data, Initializer>
+  options: ModelOptions<Data, Initializer> | ExtendedModelOptions<Base, Data, Initializer>
 ): any {
-  if (typeof baseOrOptions === 'function') {
-    assertIsDefined(options);
+  if (isExtendModelOptions(options)) {
+    const {extends: base, options: {type, initialize}} = options
     // Initialize with base expects a the model init of its base to that
     // The new initialize data can simply be merged in.
-    return class Model extends baseOrOptions {
-      static readonly type = options.type;
+    return class Model extends base {
+      static readonly type = type;
       static readonly initialize = (init) => {
-        return options.initialize(init, () => baseOrOptions.initialize(init));
+        return initialize(init, () => (base as any).initialize(init));
       };
     };
   }
-  const { type, collection, parent, initialize } = baseOrOptions;
+  const { type, collection, parent, initialize } = options;
   return class Model extends ModelImpl<Data, Initializer> {
     static readonly type = type;
     static readonly collection = collection;

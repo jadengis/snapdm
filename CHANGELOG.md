@@ -1,3 +1,14 @@
+# 0.8.0
+
+### BREAKING CHANGES
+
+- Changes the Model extension API to accept an `ExtendedModelOptions` object instead of 2
+  parameters.
+
+### Fixes
+
+- Fix a type issue with Model extension.
+
 # 0.7.1
 
 - `ModelClass` supports abstract types.
