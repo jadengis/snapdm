@@ -19,6 +19,7 @@ class Foo extends Model<FooData, FooInitializer>({
   initialize: (init) => ({ ...init, valueSize: init.value.length }),
 }) {
   updateValue(value: string): Foo {
+    // this.__copy()
     return cloneModel<Foo>(this, { value, valueSize: value.length });
   }
 }
@@ -57,14 +58,12 @@ type BazInitializer = BarInitializer &
 
 interface Baz extends BazData { }
 
-class Baz extends Model<Bar, BazData, BazInitializer>({
+class Baz extends Model<BazData, BazInitializer>({
   extends: Bar,
-  options: {
     type: 'Baz',
-    initialize: ({ name }, base) => {
-      return { ...base(), name };
+    initialize: ({ name, foo }) => {
+      return { name, data: 123123, foo: foo.toRef()  };
     },
-  },
 }) {
   action(name: string) {
     // this.snapshot.name
