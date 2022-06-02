@@ -1,5 +1,6 @@
 import { Model, ModelRef } from './model';
 import { Snapshot } from './snapshot';
+import { cloneModel } from './clone-model';
 
 type FooData = Readonly<{
   value: string;
@@ -15,12 +16,10 @@ interface Foo extends FooData { }
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
   collection: 'foos',
-  initialize: (init) => {
-    return { ...init, valueSize: init.value.length };
-  },
+  initialize: (init) => ({ ...init, valueSize: init.value.length }),
 }) {
   updateValue(value: string): Foo {
-    return this.__copy({ value, valueSize: value.length });
+    return cloneModel<Foo>(this, { value, valueSize: value.length });
   }
 }
 
@@ -43,9 +42,7 @@ class Bar extends Model<BarData, BarInitializer>({
     model: Foo,
     attribute: 'foo',
   },
-  initialize: ({ data, foo }) => {
-    return { data, foo: foo.toRef() };
-  },
+  initialize: ({ data, foo }) => ({ data, foo: foo.toRef() }),
 }) { }
 
 type BazData = BarData &
@@ -68,7 +65,12 @@ class Baz extends Model<Bar, BazData, BazInitializer>({
       return { ...base(), name };
     },
   },
-}) { }
+}) {
+  action(name: string) {
+    // this.snapshot.name
+    // return cloneModel<Baz>(this, { name });
+  }
+}
 
 describe('Model', () => {
   describe('static methods', () => {
@@ -118,6 +120,18 @@ describe('Model', () => {
             id: expect.any(String),
             path: expect.stringMatching(/foos\/.*/),
           }),
+        });
+      });
+
+      it('should allow attribute selection ref', () => {
+        expect(subject().toRef('value')).toMatchObject({
+          type: 'Foo',
+          id: expect.any(String),
+          ref: expect.objectContaining({
+            id: expect.any(String),
+            path: expect.stringMatching(/foos\/.*/),
+          }),
+          value: 'Bars',
         });
       });
     });

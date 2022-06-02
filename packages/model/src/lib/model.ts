@@ -23,12 +23,14 @@ type AbstractType<T> = abstract new (...args: any[]) => T;
 
 type AnyType<T> = Type<T> | AbstractType<T>;
 
-type ModelImmutableAttributes =
-  | 'type'
-  | 'id'
-  | 'ref'
-  | 'createdAt'
-  | 'updatedAt';
+type ModelIdentifiers = 'type' | 'id' | 'ref';
+
+type ModelImmutableAttributes = ModelIdentifiers | 'createdAt' | 'updatedAt';
+
+export type ModelAttributes<Data extends SnapshotData> = Omit<
+  Data,
+  ModelImmutableAttributes
+>;
 
 type ModelClassAttributes = Readonly<{
   type?: string;
@@ -36,8 +38,8 @@ type ModelClassAttributes = Readonly<{
 }>;
 
 type ModelParent<Data extends SnapshotData> = Readonly<{
-  model: ModelClass<AnyModel>;
-  attribute: keyof Omit<Data, ModelImmutableAttributes>;
+  model: ModelClass<AnyModel<any>>;
+  attribute: keyof ModelAttributes<Data>;
 }>;
 
 export type InitializeFunction<Data extends SnapshotData, Initializer> = (
@@ -108,7 +110,7 @@ function isExtendModelOptions<
   Initializer
 >(value: unknown): value is ExtendedModelOptions<Base, Data, Initializer> {
   const v = value as Partial<ExtendedModelOptions<Base, Data, Initializer>>;
-  return typeof v.extends === "function" && typeof v.options === "object"
+  return typeof v.extends === 'function' && typeof v.options === 'object';
 }
 
 /**
@@ -146,7 +148,7 @@ export type ModelRef<T extends AnyModel> = Readonly<{
   ref: DocumentReference<T['snapshot']>;
 }>;
 
-export interface AnyModel<Data extends SnapshotData = any> {
+export interface AnyModel<Data extends SnapshotData = object> {
   readonly type: string;
   readonly id: string;
   readonly ref: DocumentReference<Snapshot<Data>>;
@@ -155,8 +157,9 @@ export interface AnyModel<Data extends SnapshotData = any> {
   readonly snapshot: Snapshot<Data>;
   readonly updates?: SnapshotUpdates<Data>;
   readonly isNew: boolean;
-  toRef(): ModelRef<AnyModel<Data>>;
-  __copy(updates?: DeepPartial<Data>): this;
+  toRef<Keys extends keyof Data>(
+    ...includeAttributes: Keys[]
+  ): ModelRef<AnyModel<Data>> & Pick<Data, Keys>;
 }
 
 type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
@@ -221,36 +224,20 @@ abstract class ModelImpl<Data extends SnapshotData = any, Initializer = any>
    * Convert this model into a reference object.
    * @returns A ref to this model.
    */
-  toRef(): ModelRef<this> {
+  toRef<Keys extends keyof this['snapshot']>(
+    ...includeAttributes: Keys[]
+  ): ModelRef<this> & Pick<this['snapshot'], Keys> {
+    // TODO: Remove these escape hatches
     const { type, id, ref } = this.snapshot;
-    return { type, id, ref };
-  }
-
-  /**
-   * Creates a new instance of this Model containing the provided
-   * updates to the internal snapshot. This method is not intended to be
-   * consumed externally to the class and exists primarily to be used as
-   * an implementation detail of more domain oriented transformations.
-   * @param updates A patch to apply to the current snapshot in creating
-   * the new one.
-   * @returns A new model with the given patch applied.
-   */
-  __copy(updates?: DeepPartial<Data>): this {
-    // If there we no updates, simply copy the entity.
-    if (updates === undefined || updates === {}) {
-      return new this.model({ ...this.snapshot });
-    }
-    // In the presence of updates, update the the updatedAt timestamp,
-    // and set the correct `updates` on the new entity.
-    const computedUpdates = merge(this.updates, updates, {
-      updatedAt: adapter().fieldValues.serverTimestamp(),
-    });
-    const newValue = merge(this.snapshot, computedUpdates);
-    const newEntity = new this.model(newValue, {
-      updates: computedUpdates,
-      isNew: this.isNew,
-    });
-    return newEntity;
+    return includeAttributes
+      .map((k) => [k, this.snapshot[k as any]])
+      .reduce(
+        (o, [k, v]) => {
+          o[k] = v;
+          return o;
+        },
+        { type, id, ref } as any
+      );
   }
 }
 
@@ -281,7 +268,7 @@ function newSnapshot<T extends AnyModel>(
 
 function resolveParentRef<T extends AnyModel>(
   type: ModelClass<T>,
-  init: ModelInit<T>
+  init: ModelInit<T["snapshot"]>
 ): DocumentReference | undefined {
   if (type.parent) {
     const parentRef = init[type.parent.attribute];
@@ -312,7 +299,7 @@ export function Model<Data extends SnapshotData, Initializer>(
   options: ModelOptions<Data, Initializer>
 ): ConstructableModel<Data, Initializer, AnyModel<Data>>;
 export function Model<
-  Base extends AnyModel,
+  Base extends AnyModel<any>,
   Data extends ModelData<Base>,
   Initializer
 >(
@@ -320,13 +307,18 @@ export function Model<
 ): ConstructableModel<Data, Initializer, Base>;
 export function Model<
   Base extends AnyModel,
-  Data extends SnapshotData,
+  Data extends ModelData<Base>,
   Initializer
 >(
-  options: ModelOptions<Data, Initializer> | ExtendedModelOptions<Base, Data, Initializer>
+  options:
+    | ModelOptions<Data, Initializer>
+    | ExtendedModelOptions<Base, Data, Initializer>
 ): any {
   if (isExtendModelOptions(options)) {
-    const {extends: base, options: {type, initialize}} = options
+    const {
+      extends: base,
+      options: { type, initialize },
+    } = options;
     // Initialize with base expects a the model init of its base to that
     // The new initialize data can simply be merged in.
     return class Model extends base {

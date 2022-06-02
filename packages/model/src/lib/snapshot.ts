@@ -4,17 +4,19 @@ import { DocumentReference } from './adapter/references';
 
 export type SnapshotData = object;
 
-/**
- * A document snapshot model.
- */
-export type Snapshot<T extends SnapshotData = SnapshotData> = Readonly<{
+type SnapshotAttributes<T extends SnapshotData = SnapshotData> = Readonly<{
   type: string;
   id: string;
   ref: DocumentReference<Snapshot<T>>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-}> &
-  T;
+}>;
+
+/**
+ * A document snapshot model.
+ */
+export type Snapshot<T extends SnapshotData = SnapshotData> =
+  SnapshotAttributes<T> & T;
 
 export function isSnapshot<T extends Snapshot>(value: unknown): value is T {
   const v = value as Partial<Snapshot>;
