@@ -60,10 +60,10 @@ interface Baz extends BazData { }
 
 class Baz extends Model<BazData, BazInitializer>({
   extends: Bar,
-    type: 'Baz',
-    initialize: ({ name, foo }) => {
-      return { name, data: 123123, foo: foo.toRef()  };
-    },
+  type: 'Baz',
+  initialize: ({ name, data, foo }) => {
+    return { name, data, foo: foo.toRef() };
+  },
 }) {
   action(name: string) {
     // this.snapshot.name
@@ -173,6 +173,14 @@ describe('Model', () => {
     let init: BazInitializer;
     const subject = () => new Baz(init);
 
+    beforeEach(() => {
+      init = {
+        data: 25,
+        name: 'big model',
+        foo,
+      };
+    });
+
     describe('model metadata', () => {
       it('should inherit collection', () => {
         expect(Baz.collection).toEqual(Bar.collection);
@@ -185,17 +193,13 @@ describe('Model', () => {
       it('should inherit parent', () => {
         expect(Baz.parent).toEqual(Bar.parent);
       });
+
+      it('should be an instanceof', () => {
+        expect(subject() instanceof Bar).toBeTruthy();
+      });
     });
 
     describe('model properties', () => {
-      beforeEach(() => {
-        init = {
-          data: 25,
-          name: 'big model',
-          foo,
-        };
-      });
-
       it('should have all expected properties', () => {
         const baz = subject();
         expect(baz.name).toEqual(init.name);

@@ -1,10 +1,10 @@
 import { DocumentData } from './adapter/references';
-import { AnyModel, ModelClass } from './model';
+import { AnyModel, AnyModelClass, ModelClass } from './model';
 
 export type ModelFactory<T extends AnyModel> =
   | ModelClass<T>
   | Readonly<{
-      type: ModelClass<T>;
+      type: AnyModelClass<T>;
       factory: (data: DocumentData) => T;
     }>;
 

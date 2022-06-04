@@ -11,8 +11,6 @@ import {
   assert,
 } from '@snapdm/preconditions';
 import { adapter } from './adapter';
-import { merge } from './utils/merge';
-import { DeepPartial } from 'ts-essentials';
 import { delegate } from './utils/delegate';
 import { DocumentReference } from './adapter/references';
 import { Timestamp } from './adapter/timestamps';
@@ -91,7 +89,7 @@ type ModelWithBaseOptions<
      * its internal data. This method is where data defaults should be
      * set.
      */
-    initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
+    initialize?: InitializeFunctionWithBase<Base, Data, Initializer>
   }>;
 
 export type ExtendedModelOptions<
@@ -114,8 +112,10 @@ function isExtendModelOptions<
 /**
  * A type that accurately represents the interface of typeof AnyModel.
  */
-export type ModelClass<T extends AnyModel> = AnyType<T> &
+export type ModelClass<T extends AnyModel> = Type<T> &
   ModelOptions<T['snapshot'], any>;
+
+export type AnyModelClass<T extends AnyModel> = AnyType<T> & ModelOptions<T["snapshot"], any>
 
 type ModelInit<Data extends SnapshotData> = Omit<
   Data,
@@ -124,12 +124,6 @@ type ModelInit<Data extends SnapshotData> = Omit<
   type?: string; // should be T["type"] but seems like TS3.9 broke this
   id?: string; // should be T["id"] but seems like TS3.9 broke this
 };
-
-type ModelConstructor<
-  Data extends SnapshotData,
-  Initializer,
-  T extends AnyModel<Data>
-  > = new (init: Initializer | Snapshot<Data>) => T;
 
 /**
  * A reference to another model.
@@ -164,14 +158,34 @@ type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
 interface RootModel extends Snapshot { }
 
 abstract class RootModel {
-
+    constructor(initializer: object);
+    constructor(snapshot: object, options?);
+    constructor(
+      initializer,
+      options?
+    ) {
+      if (isSnapshot<Snapshot>(initializer)) {
+        /* @ts-ignore */
+        this.isNew = options?.isNew ?? false;
+        /* @ts-ignore */
+        this.updates = options?.updates;
+        /* @ts-ignore */
+        this.snapshot = initializer;
+      } else {
+        /* @ts-ignore */
+        this.isNew = true;
+        /* @ts-ignore */
+        this.snapshot = newSnapshot(this.constructor, initializer) as any; // TODO: Remove typehack.
+      }
+      return delegate(this, 'snapshot');
+    }
 }
 
 /**
  * ModelImpl is the base class that provides the core functionality
  * required by any snapdm model.
  */
-export function Model<Data extends SnapshotData, Initializer, Base extends RootModel & AnyModel = any>(options: ModelOptions<Data, Initializer> | ExtendedModelOptions<Base, any, Initializer>)  {
+export function Model<Data extends ModelData<Base>, Initializer, Base extends RootModel & AnyModel = any>(options: ModelOptions<Data, Initializer> | ExtendedModelOptions<Base, Data, Initializer>)  {
   const {type, initialize} = options
   let baseClass: typeof RootModel
   let collection: string;
@@ -192,24 +206,6 @@ export function Model<Data extends SnapshotData, Initializer, Base extends RootM
     static readonly collection = collection;
     static readonly parent = parent;
     static readonly initialize = initialize ?? identity;
-
-    constructor(initializer: Initializer);
-    constructor(snapshot: Snapshot<Data>, options?: ModelCtrOptions<Data>);
-    constructor(
-      initializer: Initializer | Snapshot<Data>,
-      options?: ModelCtrOptions<Data>
-    ) {
-        super();
-      if (isSnapshot<Snapshot<Data>>(initializer)) {
-        this.isNew = options?.isNew ?? false;
-        this.updates = options?.updates;
-        this.snapshot = initializer;
-      } else {
-        this.isNew = true;
-        this.snapshot = newSnapshot(this.model, initializer) as any; // TODO: Remove typehack.
-      }
-      return delegate(this, 'snapshot');
-    }
 
     /**
      * Get the current snapshot of the underlying JSON document.

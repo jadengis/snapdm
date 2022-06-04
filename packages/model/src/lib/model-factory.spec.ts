@@ -26,6 +26,7 @@ describe('ModelFactory', () => {
 
     describe('with ModelClass factory', () => {
       const subject = () => buildModel(Foo, model.snapshot);
+      Foo.initialize
 
       it('should build a model', () => {
         expect(subject().snapshot).toMatchObject({

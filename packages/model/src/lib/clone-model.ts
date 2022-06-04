@@ -4,7 +4,7 @@ import { AnyModel, ModelAttributes } from './model';
 import { merge } from './utils/merge';
 
 /**
-   * Creates a new instance of m's Model containing the provided
+   * Creates a new instance of this Model containing the provided
    * updates to the internal snapshot. This method is not intended to be
    * consumed externally to the class and exists primarily to be used as
    * an implementation detail of more domain oriented transformations.
@@ -17,7 +17,7 @@ export function cloneModel<T extends AnyModel<object>>(
   m: T,
   updates?: DeepPartial<ModelAttributes<T["snapshot"]>>
 ): T {
-  // If there we no updates, simply copy the entity.
+    // If there we no updates, simply copy the entity.
     if (updates === undefined || updates === {}) {
       return new (m as any).model({ ...m.snapshot });
     }
