@@ -316,53 +316,6 @@ function isModelRef(value: unknown): value is ModelRef<AnyModel> {
   );
 }
 
-/**
- * Mixin function for creating a new model.
- * @param options The options for configuring this model
- * @returns A model class with the provided options mixed int the class.
- */
-// export function Model<Data extends SnapshotData, Initializer>(
-//   options: ModelOptions<Data, Initializer>
-// ): ConstructableModel<Data, Initializer, AnyModel<Data>>;
-// export function Model<
-//   Base extends AnyModel<any>,
-//   Data extends ModelData<Base>,
-//   Initializer
-// >(
-//   options: ExtendedModelOptions<Base, Data, Initializer>
-// ): ConstructableModel<Data, Initializer, Base>;
-// export function Model<
-//   Base extends AnyModel,
-//   Data extends ModelData<Base>,
-//   Initializer
-// >(
-//   options:
-//     | ModelOptions<Data, Initializer>
-//     | ExtendedModelOptions<Base, Data, Initializer>
-// ): any {
-//   if (isExtendModelOptions(options)) {
-//     const {
-//       extends: base,
-//       options: { type, initialize },
-//     } = options;
-//     // Initialize with base expects a the model init of its base to that
-//     // The new initialize data can simply be merged in.
-//     return class Model extends base {
-//       static readonly type = type;
-//       static readonly initialize = (init) => {
-//         return initialize(init, () => (base as any).initialize(init));
-//       };
-//     };
-//   }
-//   const { type, collection, parent, initialize } = options;
-//   return class Model extends ModelImpl<Data, Initializer> {
-//     static readonly type = type;
-//     static readonly collection = collection;
-//     static readonly parent = parent;
-//     static readonly initialize = initialize ?? identity;
-//   };
-// }
-
 function identity<T>(e: T): T {
   return e;
 }

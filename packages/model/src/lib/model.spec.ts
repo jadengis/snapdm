@@ -11,6 +11,8 @@ type FooInitializer = Readonly<{
   value: string;
 }>;
 
+interface Foo extends FooData {}
+
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
   collection: 'foos',
