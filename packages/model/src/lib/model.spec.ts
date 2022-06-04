@@ -1,6 +1,5 @@
 import { Model, ModelRef } from './model';
 import { Snapshot } from './snapshot';
-import { cloneModel } from './clone-model';
 
 type FooData = Readonly<{
   value: string;
@@ -19,8 +18,7 @@ class Foo extends Model<FooData, FooInitializer>({
   initialize: (init) => ({ ...init, valueSize: init.value.length }),
 }) {
   updateValue(value: string): Foo {
-    // this.__copy()
-    return cloneModel<Foo>(this, { value, valueSize: value.length });
+    return this.clone({ value, valueSize: value.length });
   }
 }
 
@@ -66,8 +64,7 @@ class Baz extends Model<BazData, BazInitializer>({
   },
 }) {
   action(name: string) {
-    // this.snapshot.name
-    // return cloneModel<Baz>(this, { name });
+    return this.clone({ name });
   }
 }
 
@@ -135,7 +132,7 @@ describe('Model', () => {
       });
     });
 
-    describe('.__copy', () => {
+    describe('.clone', () => {
       it('should merge the input into the underlying snapshot and update updates', () => {
         const input = 'Bazlonia';
         const result = subject().updateValue(input);

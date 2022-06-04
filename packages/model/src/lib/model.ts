@@ -14,6 +14,8 @@ import { adapter } from './adapter';
 import { delegate } from './utils/delegate';
 import { DocumentReference } from './adapter/references';
 import { Timestamp } from './adapter/timestamps';
+import { DeepPartial } from 'ts-essentials';
+import { merge } from './utils/merge';
 
 type Type<T> = new (...args: any[]) => T;
 
@@ -178,8 +180,9 @@ abstract class RootModel {
 }
 
 /**
- * ModelImpl is the base class that provides the core functionality
- * required by any snapdm model.
+ * Mixin function for creating a new model.
+ * @param options The options for configuring this model
+ * @returns A model class with the provided options mixed int the class.
  */
 export function Model<
   Data extends ModelData<Base>,
@@ -263,6 +266,33 @@ export function Model<
           },
           { type, id, ref } as any
         );
+    }
+
+    /**
+     * Creates a new instance of this Model containing the provided
+     * updates to the internal snapshot. This method is not intended to be
+     * consumed externally to the class and exists primarily to be used as
+     * an implementation detail of more domain oriented transformations.
+     * @param updates A patch to apply to the current snapshot in creating
+     * the new one.
+     * @returns A new model with the given patch applied.
+     */
+    clone(updates?: DeepPartial<Data>): this {
+      // If there we no updates, simply copy the entity.
+      if (updates === undefined || updates === {}) {
+        return new this.model({ ...this.snapshot });
+      }
+      // In the presence of updates, update the the updatedAt timestamp,
+      // and set the correct `updates` on the new entity.
+      const computedUpdates = merge(this.updates, updates, {
+        updatedAt: adapter().fieldValues.serverTimestamp(),
+      });
+      const newValue = merge(this.snapshot, computedUpdates);
+      const newEntity = new this.model(newValue, {
+        updates: computedUpdates,
+        isNew: this.isNew,
+      });
+      return newEntity;
     }
   };
 }
