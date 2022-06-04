@@ -1,3 +1,21 @@
+# 0.9.0
+
+### BREAKING CHANGES
+
+- Initializer functions for extension models now behave differently. They do not recieve the
+  extended models initialization data as an argument.
+- `__copy` renamed to `clone`
+
+### Features
+
+- `toRef` now allows the inclusion of a list of additional properties to make nesting objects
+  easier.
+
+### Fixes
+
+- Fixes the typing of `__copy` and `snapshot` by rewriting how the inheritance hierarchy works for
+  extension models
+
 # 0.8.0
 
 ### BREAKING CHANGES

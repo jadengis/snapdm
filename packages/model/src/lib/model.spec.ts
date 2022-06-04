@@ -10,17 +10,15 @@ type FooInitializer = Readonly<{
   value: string;
 }>;
 
-interface Foo extends FooData { }
+interface Foo extends FooData {}
 
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
   collection: 'foos',
-  initialize: (init) => {
-    return { ...init, valueSize: init.value.length };
-  },
+  initialize: (init) => ({ ...init, valueSize: init.value.length }),
 }) {
   updateValue(value: string): Foo {
-    return this.__copy({ value, valueSize: value.length });
+    return this.clone({ value, valueSize: value.length });
   }
 }
 
@@ -43,9 +41,7 @@ class Bar extends Model<BarData, BarInitializer>({
     model: Foo,
     attribute: 'foo',
   },
-  initialize: ({ data, foo }) => {
-    return { data, foo: foo.toRef() };
-  },
+  initialize: ({ data, foo }) => ({ data, foo: foo.toRef() }),
 }) { }
 
 type BazData = BarData &
@@ -60,15 +56,17 @@ type BazInitializer = BarInitializer &
 
 interface Baz extends BazData { }
 
-class Baz extends Model<Bar, BazData, BazInitializer>({
+class Baz extends Model<BazData, BazInitializer>({
   extends: Bar,
-  options: {
-    type: 'Baz',
-    initialize: ({ name }, base) => {
-      return { ...base(), name };
-    },
+  type: 'Baz',
+  initialize: ({ name, data, foo }) => {
+    return { name, data, foo: foo.toRef() };
   },
-}) { }
+}) {
+  action(name: string) {
+    return this.clone({ name });
+  }
+}
 
 describe('Model', () => {
   describe('static methods', () => {
@@ -120,9 +118,21 @@ describe('Model', () => {
           }),
         });
       });
+
+      it('should allow attribute selection ref', () => {
+        expect(subject().toRef('value')).toMatchObject({
+          type: 'Foo',
+          id: expect.any(String),
+          ref: expect.objectContaining({
+            id: expect.any(String),
+            path: expect.stringMatching(/foos\/.*/),
+          }),
+          value: 'Bars',
+        });
+      });
     });
 
-    describe('.__copy', () => {
+    describe('.clone', () => {
       it('should merge the input into the underlying snapshot and update updates', () => {
         const input = 'Bazlonia';
         const result = subject().updateValue(input);
@@ -160,6 +170,14 @@ describe('Model', () => {
     let init: BazInitializer;
     const subject = () => new Baz(init);
 
+    beforeEach(() => {
+      init = {
+        data: 25,
+        name: 'big model',
+        foo,
+      };
+    });
+
     describe('model metadata', () => {
       it('should inherit collection', () => {
         expect(Baz.collection).toEqual(Bar.collection);
@@ -172,17 +190,13 @@ describe('Model', () => {
       it('should inherit parent', () => {
         expect(Baz.parent).toEqual(Bar.parent);
       });
+
+      it('should be an instanceof', () => {
+        expect(subject() instanceof Bar).toBeTruthy();
+      });
     });
 
     describe('model properties', () => {
-      beforeEach(() => {
-        init = {
-          data: 25,
-          name: 'big model',
-          foo,
-        };
-      });
-
       it('should have all expected properties', () => {
         const baz = subject();
         expect(baz.name).toEqual(init.name);
