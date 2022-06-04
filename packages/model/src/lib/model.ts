@@ -51,9 +51,7 @@ export type InitializeFunctionWithBase<
   Base extends RootModel & AnyModel,
   Data extends ModelData<Base>,
   Initializer
-  > = (
-    init: Initializer,
-  ) => ModelInit<Data>;
+  > = (init: Initializer) => ModelInit<Data>;
 
 export type ModelOptions<
   Data extends SnapshotData,
@@ -74,9 +72,9 @@ export type ModelOptions<
   }>;
 
 type ModelData<T extends RootModel & AnyModel> = Omit<
-  T["snapshot"],
+  T['snapshot'],
   ModelImmutableAttributes
->
+>;
 
 type ModelWithBaseOptions<
   Base extends RootModel & AnyModel,
@@ -89,7 +87,7 @@ type ModelWithBaseOptions<
      * its internal data. This method is where data defaults should be
      * set.
      */
-    initialize?: InitializeFunctionWithBase<Base, Data, Initializer>
+    initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
   }>;
 
 export type ExtendedModelOptions<
@@ -98,7 +96,8 @@ export type ExtendedModelOptions<
   Initializer
   > = Readonly<{
     extends: AnyType<Base>;
-  }> & ModelWithBaseOptions<Base, Data, Initializer>;
+  }> &
+  ModelWithBaseOptions<Base, Data, Initializer>;
 
 function isExtendModelOptions<
   Base extends AnyModel,
@@ -115,7 +114,8 @@ function isExtendModelOptions<
 export type ModelClass<T extends AnyModel> = Type<T> &
   ModelOptions<T['snapshot'], any>;
 
-export type AnyModelClass<T extends AnyModel> = AnyType<T> & ModelOptions<T["snapshot"], any>
+export type AnyModelClass<T extends AnyModel> = AnyType<T> &
+  ModelOptions<T['snapshot'], any>;
 
 type ModelInit<Data extends SnapshotData> = Omit<
   Data,
@@ -133,7 +133,6 @@ export type ModelRef<T extends AnyModel> = Readonly<{
   id: string;
   ref: DocumentReference<T['snapshot']>;
 }>;
-
 
 export interface AnyModel<Data extends SnapshotData = object> {
   readonly type: string;
@@ -158,54 +157,66 @@ type ModelCtrOptions<Data extends SnapshotData> = Readonly<{
 interface RootModel extends Snapshot { }
 
 abstract class RootModel {
-    constructor(initializer: object);
-    constructor(snapshot: object, options?);
-    constructor(
-      initializer,
-      options?
-    ) {
-      if (isSnapshot<Snapshot>(initializer)) {
-        /* @ts-ignore */
-        this.isNew = options?.isNew ?? false;
-        /* @ts-ignore */
-        this.updates = options?.updates;
-        /* @ts-ignore */
-        this.snapshot = initializer;
-      } else {
-        /* @ts-ignore */
-        this.isNew = true;
-        /* @ts-ignore */
-        this.snapshot = newSnapshot(this.constructor, initializer) as any; // TODO: Remove typehack.
-      }
-      return delegate(this, 'snapshot');
+  constructor(initializer);
+  constructor(snapshot, options?);
+  constructor(initializer, options?) {
+    if (isSnapshot<Snapshot>(initializer)) {
+      /* @ts-ignore */
+      this.isNew = options?.isNew ?? false;
+      /* @ts-ignore */
+      this.updates = options?.updates;
+      /* @ts-ignore */
+      this.snapshot = initializer;
+    } else {
+      /* @ts-ignore */
+      this.isNew = true;
+      /* @ts-ignore */
+      this.snapshot = newSnapshot(this.constructor, initializer) as any; // TODO: Remove typehack.
     }
+    return delegate(this, 'snapshot');
+  }
 }
 
 /**
  * ModelImpl is the base class that provides the core functionality
  * required by any snapdm model.
  */
-export function Model<Data extends ModelData<Base>, Initializer, Base extends RootModel & AnyModel = any>(options: ModelOptions<Data, Initializer> | ExtendedModelOptions<Base, Data, Initializer>)  {
-  const {type, initialize} = options
-  let baseClass: typeof RootModel
+export function Model<
+  Data extends ModelData<Base>,
+  Initializer,
+  Base extends RootModel & AnyModel = any
+>(
+  options:
+    | ModelOptions<Data, Initializer>
+    | ExtendedModelOptions<Base, Data, Initializer>
+) {
+  const { type, initialize } = options;
+  let baseClass: typeof RootModel;
   let collection: string;
   let parent: ModelParent<Data> | undefined;
-  if(isExtendModelOptions((options))) {
+  if (isExtendModelOptions(options)) {
     baseClass = options.extends;
-    collection = (options.extends as any).collection
-    parent = (options.extends as any).parent
+    collection = (options.extends as any).collection;
+    parent = (options.extends as any).parent;
   } else {
     baseClass = RootModel;
-    collection = options.collection
-    parent = options.parent
+    collection = options.collection;
+    parent = options.parent;
   }
-  return class Model extends baseClass
-    implements AnyModel<Data>
-  {
+  return class Model extends baseClass implements AnyModel<Data> {
     static readonly type = type;
     static readonly collection = collection;
     static readonly parent = parent;
     static readonly initialize = initialize ?? identity;
+
+    constructor(init: Initializer);
+    constructor(snapshot: Snapshot<Data>, options?: ModelCtrOptions<Data>);
+    constructor(
+      init: Snapshot<Data> | Initializer,
+      options?: ModelCtrOptions<Data>
+    ) {
+      super(init, options);
+    }
 
     /**
      * Get the current snapshot of the underlying JSON document.
@@ -283,7 +294,7 @@ function newSnapshot<T extends AnyModel>(
 
 function resolveParentRef<T extends AnyModel>(
   type: ModelClass<T>,
-  init: ModelInit<T["snapshot"]>
+  init: ModelInit<T['snapshot']>
 ): DocumentReference | undefined {
   if (type.parent) {
     const parentRef = init[type.parent.attribute];
