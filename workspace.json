@@ -7,7 +7,7 @@
       "projectType": "library",
       "targets": {
         "build": {
-          "executor": "@nrwl/node:package",
+          "executor": "@nrwl/js:tsc",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/packages/model",
@@ -32,11 +32,12 @@
           "executor": "@nrwl/jest:jest",
           "outputs": ["coverage/packages/model"],
           "options": {
-            "jestConfig": "packages/model/jest.config.cjs",
+            "jestConfig": "packages/model/jest.config.ts",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "preconditions": {
       "root": "packages/preconditions",
@@ -44,7 +45,7 @@
       "projectType": "library",
       "targets": {
         "build": {
-          "executor": "@nrwl/node:package",
+          "executor": "@nrwl/js:tsc",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/packages/preconditions",
@@ -69,14 +70,12 @@
           "executor": "@nrwl/jest:jest",
           "outputs": ["coverage/packages/preconditions"],
           "options": {
-            "jestConfig": "packages/preconditions/jest.config.cjs",
+            "jestConfig": "packages/preconditions/jest.config.ts",
             "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
     }
-  },
-  "cli": {
-    "defaultCollection": "@nrwl/workspace"
   }
 }
