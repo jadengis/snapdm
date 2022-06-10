@@ -1,0 +1,37 @@
+{
+  "sourceRoot": "packages/preconditions/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/preconditions",
+        "main": "packages/preconditions/src/index.ts",
+        "packageJson": "packages/preconditions/package.json",
+        "tsConfig": "packages/preconditions/tsconfig.lib.json",
+        "assets": [
+          "LICENSE",
+          "packages/preconditions/package.json",
+          "packages/preconditions/*.md"
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["packages/preconditions/**/*.ts"]
+      },
+      "outputs": ["{options.outputFile}"]
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/packages/preconditions"],
+      "options": {
+        "jestConfig": "packages/preconditions/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
