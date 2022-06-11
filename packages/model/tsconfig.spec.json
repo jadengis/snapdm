@@ -2,8 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
-    "types": ["jest", "node"]
+    "module": "ES2020",
+    "target": "ES2020",
+    "types": ["jest", "node"],
+    "resolveJsonModule": true
   },
   "include": [
     "src/test-setup.ts",

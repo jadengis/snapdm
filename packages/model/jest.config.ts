@@ -1,4 +1,7 @@
+import { pathsToModuleNameMapper } from 'ts-jest';
 /* eslint-disable */
+const { compilerOptions } = require('../../tsconfig.base.json');
+
 export default {
   displayName: 'model',
   preset: '../../jest.preset.js',
@@ -14,4 +17,7 @@ export default {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/packages/model',
   testEnvironment: 'node',
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: '<rootDir>/../..',
+  }),
 };

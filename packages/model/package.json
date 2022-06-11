@@ -24,5 +24,30 @@
     "name": "John Dengis",
     "email": "jadengis@gmail.com"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup -c",
+    "test": "jest",
+    "lint": "eslint **/*.ts"
+  },
+  "type": "module",
+  "nx": {
+    "targets": {
+      "build": {
+        "outputs": ["dist/packages/models/"],
+        "dependsOn": [
+          {
+            "target": "build",
+            "projects": "dependencies"
+          }
+        ]
+      },
+      "test": {
+        "outputs":[]
+      },
+      "lint": {
+        "outputs":[]
+      }
+    }
+  }
 }

@@ -1,37 +1,3 @@
 {
-  "sourceRoot": "packages/model/src",
-  "projectType": "library",
-  "targets": {
-    "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "dist/packages/model",
-        "main": "packages/model/src/index.ts",
-        "packageJson": "packages/model/package.json",
-        "tsConfig": "packages/model/tsconfig.lib.json",
-        "assets": [
-          "LICENSE",
-          "packages/model/package.json",
-          "packages/model/*.md"
-        ]
-      }
-    },
-    "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "options": {
-        "lintFilePatterns": ["packages/model/**/*.ts"]
-      },
-      "outputs": ["{options.outputFile}"]
-    },
-    "test": {
-      "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/packages/model"],
-      "options": {
-        "jestConfig": "packages/model/jest.config.ts",
-        "passWithNoTests": true
-      }
-    }
-  },
-  "tags": []
+  "$schema": "../../node_modules/nx/schemas/project-schema.json"
 }
