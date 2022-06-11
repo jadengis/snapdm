@@ -1,6 +1,6 @@
 {
   "name": "@snapdm/preconditions",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "General purpose preconditions for typesafe Typescript libraries",
   "publishConfig": {
     "access": "public"
@@ -22,5 +22,24 @@
     "name": "John Dengis",
     "email": "jadengis@gmail.com"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup -c",
+    "test": "jest",
+    "lint": "eslint **/*.ts"
+  },
+  "type": "module",
+  "nx": {
+    "targets": {
+      "build": {
+        "outputs": ["dist/packages/preconditions/"]
+      },
+      "test": {
+        "outputs":[]
+      },
+      "lint": {
+        "outputs":[]
+      }
+    }
+  }
 }

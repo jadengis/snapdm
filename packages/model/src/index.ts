@@ -1,12 +1,12 @@
-export { initialize, SnapdmOptions } from './lib/initialize';
-export { Adapter, adapter } from './lib/adapter';
-export { Timestamp } from './lib/adapter/timestamps';
+export { initialize, type SnapdmOptions } from './lib/initialize';
+export { type Adapter, adapter } from './lib/adapter';
+export { type Timestamp } from './lib/adapter/timestamps';
 export {
-  AnyModel,
+  type AnyModel,
   Model,
-  ModelRef,
-  ModelClass,
-  ModelOptions,
-  InitializeFunction,
+  type ModelRef,
+  type ModelClass,
+  type ModelOptions,
+  type InitializeFunction,
 } from './lib/model';
-export { ModelFactory, buildModel } from './lib/model-factory';
+export { type ModelFactory, buildModel } from './lib/model-factory';

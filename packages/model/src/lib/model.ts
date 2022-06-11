@@ -279,7 +279,7 @@ export function Model<
      */
     clone(updates?: DeepPartial<Data>): this {
       // If there we no updates, simply copy the entity.
-      if (updates === undefined || updates === {}) {
+      if (updates === undefined || Object.keys(updates).length === 0) {
         return new this.model({ ...this.snapshot });
       }
       // In the presence of updates, update the the updatedAt timestamp,

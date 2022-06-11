@@ -1,3 +1,10 @@
+# 0.10.0
+
+### BREAKING CHANGES
+
+- Package format has changed to include both an ESM bundle and a CJS bundle.
+- Packages are now set to `"type": "module"`.
+
 # 0.9.0
 
 ### BREAKING CHANGES
