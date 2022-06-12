@@ -1,3 +1,9 @@
+# 0.10.1
+
+### Fixes
+
+- Some more ergonomic types around `ModelParent`.
+
 # 0.10.0
 
 ### BREAKING CHANGES
