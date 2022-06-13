@@ -39,7 +39,7 @@ type ModelClassAttributes = Readonly<{
 
 type ModelParent<Data extends SnapshotData> = Readonly<{
   // TODO: See if this can be more specific. The additional props are just a soft validation.
-  model: Type<AnyModel> & ModelClassAttributes;
+  model: Type<AnyModel> & ModelClassAttributes & Readonly<{parent?: any}>;
   attribute: keyof ModelAttributes<Data>;
 }>;
 

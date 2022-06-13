@@ -1,6 +1,6 @@
 {
   "name": "@snapdm/model",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "An opinionated snapshot oriented modeling system for Cloud Firestore",
   "publishConfig": {
     "access": "public"

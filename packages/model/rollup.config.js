@@ -29,7 +29,7 @@ export default [
           const exports = {
             types: `./${name}.d.ts`,
             import: `./${name}.esm.js`,
-            require: `./${name}.cjs.js`,
+            require: `./${name}.cjs`,
           };
           pkg.main = exports.require;
           pkg.module = exports.import;
@@ -50,7 +50,7 @@ export default [
     ],
     output: [
       {
-        file: `${outputPath}/${name}.cjs.js`,
+        file: `${outputPath}/${name}.cjs`,
         format: 'cjs',
         sourcemap: true,
       },

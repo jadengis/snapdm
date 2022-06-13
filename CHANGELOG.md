@@ -1,3 +1,9 @@
+# 0.10.2
+
+### Fixes
+
+- change `index.cjs.js` to `index.cjs` to fix the `module` issue.
+
 # 0.10.1
 
 ### Fixes
