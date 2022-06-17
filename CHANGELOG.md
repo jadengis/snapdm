@@ -1,3 +1,9 @@
+# 0.10.3
+### Fixes
+
+- Fixes `clone` in the case where an empty array is being merged with a non-empty array. Before the
+  arrays were merged. Now the empty array replacing the existing array.
+
 # 0.10.2
 
 ### Fixes

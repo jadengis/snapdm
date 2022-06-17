@@ -10,7 +10,7 @@ type FooInitializer = Readonly<{
   value: string;
 }>;
 
-interface Foo extends FooData {}
+interface Foo extends FooData { }
 
 class Foo extends Model<FooData, FooInitializer>({
   type: 'Foo',
@@ -67,6 +67,33 @@ class Baz extends Model<BazData, BazInitializer>({
     return this.clone({ name });
   }
 }
+
+type WithArrayData = Readonly<{
+  array: string[];
+}>;
+
+interface WithArray extends WithArrayData { }
+
+class WithArray extends Model<WithArrayData, WithArrayData>({
+  type: 'WithArray',
+  collection: 'withArray',
+}) { }
+
+type File = Readonly<{
+  type: string;
+  name: string;
+}>;
+
+type FolderData = Readonly<{
+  files: File[];
+}>;
+
+interface Folder extends FolderData { }
+
+class Folder extends Model<FolderData, FolderData>({
+  type: 'Folder',
+  collection: 'folders',
+}) { }
 
 describe('Model', () => {
   describe('static methods', () => {
@@ -202,6 +229,30 @@ describe('Model', () => {
         expect(baz.name).toEqual(init.name);
         expect(baz.data).toEqual(init.data);
         expect(baz.foo.id).toEqual(foo.id);
+      });
+    });
+  });
+
+  describe('with arrays', () => {
+    describe('simple array', () => {
+      const withArray = new WithArray({ array: ['foo'] });
+
+      [[], ['bar']].forEach((test) => {
+        it('should replace the array', () => {
+          const result = withArray.clone({ array: test });
+          expect(result.array).toEqual(test);
+        });
+      });
+    });
+
+    describe('complex array', () => {
+      const folder = new Folder({ files: [{ type: 'File', name: 'wowza' }] });
+
+      [[], [{ type: 'File', name: 'blue blue' }]].forEach((test) => {
+        it('should replace the array', () => {
+          const result = folder.clone({ files: test });
+          expect(result.files).toEqual(test);
+        });
       });
     });
   });
