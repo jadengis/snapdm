@@ -42,6 +42,14 @@ class Bar extends Model<BarData, BarInitializer>({
     attribute: 'foo',
   },
   initialize: ({ data, foo }) => ({ data, foo: foo.toRef() }),
+  validators: [
+    (snapshot) => {
+      if (snapshot.data > 10) {
+        return { data: `data is too big!` };
+      }
+      return null;
+    },
+  ],
 }) { }
 
 type BazData = BarData &
@@ -105,6 +113,27 @@ describe('Model', () => {
 
     it('should have a collection', () => {
       expect(subject().collection).toEqual('foos');
+    });
+
+    it('should have default validator if none set', () => {
+      expect(Foo.validator(new Foo({ value: 'Mario' }).snapshot)).toBeNull();
+    });
+
+    it('should have a custom validator when set', () => {
+      expect(
+        Bar.validator(
+          new Bar({ data: 25, foo: new Foo({ value: 'Mario' }) }).snapshot
+        )
+      ).toStrictEqual({ data: 'data is too big!' });
+    });
+
+    it('should have a custom validator when inherited', () => {
+      expect(
+        Baz.validator(
+          new Baz({ name: 'Baz', data: 25, foo: new Foo({ value: 'Mario' }) })
+            .snapshot
+        )
+      ).toStrictEqual({ data: 'data is too big!' });
     });
   });
 

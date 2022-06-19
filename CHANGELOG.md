@@ -1,4 +1,11 @@
+# 0.11.0
+
+### Features
+
+- Allow the settings of optional `validators` on a model class. This makes it so backend implementations can apply validations before writing to the database.
+
 # 0.10.3
+
 ### Fixes
 
 - Fixes `clone` in the case where an empty array is being merged with a non-empty array. Before the

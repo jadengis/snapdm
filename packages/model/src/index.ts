@@ -9,4 +9,5 @@ export {
   type ModelOptions,
   type InitializeFunction,
 } from './lib/model';
+export type { Validator, ValidationErrors } from './lib/validator';
 export { type ModelFactory, buildModel } from './lib/model-factory';

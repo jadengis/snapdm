@@ -16,6 +16,7 @@ import { DocumentReference } from './adapter/references';
 import { Timestamp } from './adapter/timestamps';
 import { DeepPartial } from 'ts-essentials';
 import { merge } from './utils/merge';
+import { combine, Validator } from './validator';
 
 type Type<T> = new (...args: any[]) => T;
 
@@ -39,7 +40,7 @@ type ModelClassAttributes = Readonly<{
 
 type ModelParent<Data extends SnapshotData> = Readonly<{
   // TODO: See if this can be more specific. The additional props are just a soft validation.
-  model: Type<AnyModel> & ModelClassAttributes & Readonly<{parent?: any}>;
+  model: Type<AnyModel> & ModelClassAttributes & Readonly<{ parent?: any }>;
   attribute: keyof ModelAttributes<Data>;
 }>;
 
@@ -72,6 +73,12 @@ export type ModelOptions<
      * set.
      */
     initialize?: InitializeFunction<Data, Initializer>;
+
+    /**
+     * An optional list of validators to apply to the model's snapshot
+     * before writing it to the database.
+     */
+    validators?: Validator<Data>[];
   }>;
 
 type ModelData<T extends RootModel & AnyModel> = Omit<
@@ -91,6 +98,12 @@ type ModelWithBaseOptions<
      * set.
      */
     initialize?: InitializeFunctionWithBase<Base, Data, Initializer>;
+
+    /**
+     * An optional list of validators to apply to the model's snapshot
+     * before writing it to the database.
+     */
+    validators?: Validator<Data>[];
   }>;
 
 export type ExtendedModelOptions<
@@ -115,10 +128,16 @@ function isExtendModelOptions<
  * A type that accurately represents the interface of typeof AnyModel.
  */
 export type ModelClass<T extends AnyModel> = Type<T> &
-  ModelOptions<T['snapshot'], any>;
+  Exclude<ModelOptions<T['snapshot'], any>, 'validators'> &
+  Readonly<{
+    validator: Validator<T['snapshot']>;
+  }>;
 
 export type AnyModelClass<T extends AnyModel> = AnyType<T> &
-  ModelOptions<T['snapshot'], any>;
+  Exclude<ModelOptions<T['snapshot'], any>, 'validators'> &
+  Readonly<{
+    validator: Validator<T['snapshot']>;
+  }>;
 
 type ModelInit<Data extends SnapshotData> = Omit<
   Data,
@@ -194,24 +213,31 @@ export function Model<
     | ModelOptions<Data, Initializer>
     | ExtendedModelOptions<Base, Data, Initializer>
 ) {
-  const { type, initialize } = options;
+  const { type, initialize, validators } = options;
   let baseClass: typeof RootModel;
   let collection: string;
   let parent: ModelParent<Data> | undefined;
+  let validator: Validator<Data>;
   if (isExtendModelOptions(options)) {
     baseClass = options.extends;
     collection = (options.extends as any).collection;
     parent = (options.extends as any).parent;
+    const extendValidator = (options.extends as any).validator;
+    validator = validators
+      ? combine([...validators, extendValidator])
+      : extendValidator;
   } else {
     baseClass = RootModel;
     collection = options.collection;
     parent = options.parent;
+    validator = validators ? combine(validators) : () => null;
   }
   return class Model extends baseClass implements AnyModel<Data> {
     static readonly type = type;
     static readonly collection = collection;
     static readonly parent = parent;
     static readonly initialize = initialize ?? identity;
+    static readonly validator = validator;
 
     constructor(init: Initializer);
     constructor(snapshot: Snapshot<Data>, options?: ModelCtrOptions<Data>);
